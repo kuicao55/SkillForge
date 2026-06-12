@@ -1,0 +1,9 @@
+name: cursor
+type: cursor
+paths:
+  project: .cursor
+  global: ~/.cursor
+  skills: skills
+load_order:
+  - project
+  - global

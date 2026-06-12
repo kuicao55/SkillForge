@@ -1,0 +1,69 @@
+import fs from 'fs-extra';
+import path from 'node:path';
+import { type Skill, type SkillCategory } from '../../types/skill.js';
+import { getSkillSourceDirs } from '../../utils/paths.js';
+import { parseSkillMd, isSkillDir } from './parser.js';
+
+/**
+ * Discover all skills across Personal, Community, and Experimental directories.
+ */
+export async function discoverSkills(): Promise<SkillCategory> {
+  const dirs = getSkillSourceDirs();
+
+  const [personal, community, experimental] = await Promise.all([
+    scanDirForSkills(dirs.personal, 'personal'),
+    scanDirForSkills(dirs.community, 'community'),
+    scanDirForSkills(dirs.experimental, 'experimental'),
+  ]);
+
+  return { personal, community, experimental };
+}
+
+/**
+ * Find a skill by name across all source directories.
+ */
+export async function findSkill(name: string): Promise<Skill | null> {
+  const all = await discoverSkills();
+  const allSkills = [...all.personal, ...all.community, ...all.experimental];
+  return allSkills.find(s => s.metadata.name === name) || null;
+}
+
+/**
+ * Scan a directory recursively for SKILL.md files.
+ */
+async function scanDirForSkills(
+  dirPath: string,
+  _source: 'personal' | 'community' | 'experimental',
+): Promise<Skill[]> {
+  if (!await fs.pathExists(dirPath)) {
+    return [];
+  }
+
+  const skills: Skill[] = [];
+
+  async function scan(dir: string) {
+    // Check if current dir is a skill
+    if (await isSkillDir(dir)) {
+      const skill = await parseSkillMd(path.join(dir, 'SKILL.md'));
+      if (skill) {
+        skills.push(skill);
+      }
+      return; // Don't recurse into skill directories
+    }
+
+    // Recurse into subdirectories
+    try {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory() && !entry.name.startsWith('.')) {
+          await scan(path.join(dir, entry.name));
+        }
+      }
+    } catch {
+      // Permission errors etc — skip silently
+    }
+  }
+
+  await scan(dirPath);
+  return skills;
+}

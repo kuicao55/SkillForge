@@ -1,0 +1,9 @@
+name: claude
+type: claude-code
+paths:
+  project: .claude
+  global: ~/.claude
+  skills: skills
+load_order:
+  - project
+  - global

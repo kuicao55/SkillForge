@@ -1,0 +1,9 @@
+name: test-agent
+type: test-type
+paths:
+  project: .test
+  global: ~/.test
+  skills: skills
+load_order:
+  - project
+  - global
