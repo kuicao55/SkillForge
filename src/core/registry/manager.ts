@@ -1,4 +1,5 @@
 import fs from 'fs-extra';
+import path from 'node:path';
 import { type Registry, type RegistryEntry, type LinkRecord, RegistrySchema } from '../../types/registry.js';
 import { getRegistryPath } from '../../utils/paths.js';
 
@@ -33,7 +34,7 @@ export async function loadRegistry(): Promise<Registry> {
  */
 export async function saveRegistry(registry: Registry): Promise<void> {
   const registryPath = getRegistryPath();
-  await fs.ensureDir(await import('node:path').then(p => p.default.dirname(registryPath)));
+  await fs.ensureDir(path.dirname(registryPath));
 
   const tmpPath = registryPath + '.tmp';
   await fs.writeFile(tmpPath, JSON.stringify(registry, null, 2), 'utf-8');
@@ -60,11 +61,27 @@ export async function unregisterSkill(name: string): Promise<void> {
 
 /**
  * Add a link record to a skill's registry entry.
+ * Auto-creates the entry if the skill isn't registered yet.
  */
-export async function addLink(name: string, link: LinkRecord): Promise<void> {
+export async function addLink(
+  name: string,
+  link: LinkRecord,
+  skillPath?: string,
+): Promise<void> {
   const registry = await loadRegistry();
-  const entry = registry.skills[name];
-  if (!entry) return;
+  let entry = registry.skills[name];
+
+  // Auto-register if not present
+  if (!entry) {
+    entry = {
+      name,
+      source: inferSource(skillPath || link.symlinkPath),
+      installPath: skillPath || '',
+      installedAt: new Date().toISOString(),
+      links: [],
+    };
+    registry.skills[name] = entry;
+  }
 
   // Avoid duplicate links
   const exists = entry.links.some(
@@ -74,6 +91,13 @@ export async function addLink(name: string, link: LinkRecord): Promise<void> {
     entry.links.push(link);
     await saveRegistry(registry);
   }
+}
+
+function inferSource(filePath: string): 'personal' | 'community' | 'experimental' {
+  const normalized = filePath.replace(/\\/g, '/');
+  if (normalized.includes('/Community/')) return 'community';
+  if (normalized.includes('/Experimental/')) return 'experimental';
+  return 'personal';
 }
 
 /**

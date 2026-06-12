@@ -31,12 +31,16 @@ export async function linkSkill(
   await fs.symlink(skillPath, symlinkPath, 'dir');
 
   // Record in registry
-  await addLink(skillName, {
-    agent: agent.config.name,
-    projectPath,
-    symlinkPath,
-    createdAt: new Date().toISOString(),
-  });
+  await addLink(
+    skillName,
+    {
+      agent: agent.config.name,
+      projectPath,
+      symlinkPath,
+      createdAt: new Date().toISOString(),
+    },
+    skillPath,
+  );
 
   return symlinkPath;
 }
@@ -87,12 +91,16 @@ export async function enableSkillGlobally(
 
   await fs.symlink(skillPath, symlinkPath, 'dir');
 
-  await addLink(skillName, {
-    agent: agent.config.name,
-    projectPath: '__global__',
-    symlinkPath,
-    createdAt: new Date().toISOString(),
-  });
+  await addLink(
+    skillName,
+    {
+      agent: agent.config.name,
+      projectPath: '__global__',
+      symlinkPath,
+      createdAt: new Date().toISOString(),
+    },
+    skillPath,
+  );
 
   return symlinkPath;
 }
