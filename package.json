@@ -1,0 +1,55 @@
+{
+  "name": "skillforge",
+  "version": "0.1.0",
+  "description": "AI Skill Management System — manage, compose, and link skills across AI agents",
+  "type": "module",
+  "bin": {
+    "skillforge": "./dist/cli/index.js"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ai",
+    "skills",
+    "agent",
+    "claude",
+    "cursor",
+    "skill-management"
+  ],
+  "author": "kui",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "agents"
+  ],
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "fs-extra": "^11.3.0",
+    "gray-matter": "^4.0.3",
+    "js-yaml": "^4.1.0",
+    "ora": "^8.2.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.15.3",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}
