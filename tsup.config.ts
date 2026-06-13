@@ -10,6 +10,26 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   dts: true,
+  noExternal: [],
+  external: [
+    '@inquirer/core',
+    '@inquirer/prompts',
+    '@inquirer/type',
+    '@inquirer/figures',
+    '@inquirer/select',
+    '@inquirer/input',
+    '@inquirer/checkbox',
+    '@inquirer/confirm',
+    'mute-stream',
+    'chalk',
+    'commander',
+    'fs-extra',
+    'gray-matter',
+    'js-yaml',
+    'ora',
+    'zod',
+    'node:*',
+  ],
   onSuccess: async () => {
     // Add shebang to CLI entry and make it executable
     const cliPath = path.resolve('dist/cli/index.js');

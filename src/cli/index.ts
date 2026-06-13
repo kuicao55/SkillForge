@@ -9,6 +9,7 @@ import { enableCommand, disableCommand } from './commands/enable.js';
 import { doctorCommand } from './commands/doctor.js';
 import { agentsCommand } from './commands/agents.js';
 import { infoCommand } from './commands/info.js';
+import { configCommand } from './commands/config.js';
 
 const program = new Command();
 
@@ -84,5 +85,10 @@ program
   .command('info <name>')
   .description('Show detailed information about a skill')
   .action(infoCommand);
+
+program
+  .command('config [action] [value]')
+  .description('Show or set configuration (show, set-root, reset-root)')
+  .action(configCommand);
 
 program.parse();

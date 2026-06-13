@@ -1,11 +1,12 @@
 import chalk from 'chalk';
 import { select } from '@inquirer/prompts';
 import { findSkill } from '../../core/skill/discovery.js';
-import { findAgent, loadAgents, resolveProjectSkillsDir } from '../../core/agent/manager.js';
+import { findAgent, loadAgents } from '../../core/agent/manager.js';
 import { linkSkill, unlinkSkill } from '../../core/link/manager.js';
 import { loadRegistry } from '../../core/registry/manager.js';
+import { getProjectsRoot } from '../../core/config/index.js';
+import { directoryBrowser } from '../prompts/directory-browser.js';
 import { log } from '../../utils/logger.js';
-import fs from 'fs-extra';
 
 interface LinkOptions {
   agent?: string;
@@ -34,23 +35,14 @@ export async function linkCommand(skillName: string, options: LinkOptions): Prom
     }
 
     if (!projectPath) {
-      // Prompt for project path
-      projectPath = await select({
-        message: 'Select project:',
-        choices: [
-          { name: 'Enter custom path', value: '__custom__' },
-        ],
+      const rootDir = await getProjectsRoot();
+      projectPath = await directoryBrowser({
+        message: 'Select project directory:',
+        rootDir,
       });
-
-      if (projectPath === '__custom__') {
-        // For custom path, user needs to provide it via CLI arg
-        log.error('Please provide project path: skill link <skill> -p <path>');
-        return;
-      }
     }
 
     if (!agentName) {
-      // Prompt for agent
       const agentChoices = agents.map(a => ({
         name: `${a.config.icon ? a.config.icon + ' ' : ''}${a.config.name} (${a.config.type})`,
         value: a.config.name,
