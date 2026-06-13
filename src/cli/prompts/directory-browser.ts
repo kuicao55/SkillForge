@@ -28,6 +28,9 @@ async function listDirs(dirPath: string): Promise<string[]> {
   }
 }
 
+// First item is always "select current directory"
+const SELECT_CURRENT = '__select_current__';
+
 export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
   (config, done) => {
     const [currentDir, setCurrentDir] = useState(config.rootDir);
@@ -36,7 +39,10 @@ export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
     const [loading, setLoading] = useState(true);
     const prefix = usePrefix({});
 
-    useEffect((setStale) => {
+    // Build display list: [select current, ...subdirs]
+    const displayItems = [SELECT_CURRENT, ...items];
+
+    useEffect(() => {
       setLoading(true);
       listDirs(currentDir).then(dirs => {
         setItems(dirs);
@@ -49,7 +55,6 @@ export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
       if (key.ctrl && key.name === 'c') {
         process.exit(0);
       } else if (key.name === 'escape') {
-        // ESC: go to parent, or exit if at root
         const parent = path.dirname(currentDir);
         if (parent !== currentDir) {
           setCurrentDir(parent);
@@ -57,11 +62,12 @@ export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
           process.exit(0);
         }
       } else if (isUpKey(key)) {
-        setCursor(cursor > 0 ? cursor - 1 : Math.max(0, items.length - 1));
+        setCursor(cursor > 0 ? cursor - 1 : displayItems.length - 1);
       } else if (isDownKey(key)) {
-        setCursor(cursor < items.length - 1 ? cursor + 1 : 0);
-      } else if (isRightKey(key) && items.length > 0) {
-        const selected = items[cursor];
+        setCursor(cursor < displayItems.length - 1 ? cursor + 1 : 0);
+      } else if (isRightKey(key) && cursor > 0) {
+        // Enter subdir (skip "select current" item)
+        const selected = items[cursor - 1];
         setCurrentDir(path.join(currentDir, selected));
       } else if (isLeftKey(key)) {
         const parent = path.dirname(currentDir);
@@ -69,7 +75,14 @@ export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
           setCurrentDir(parent);
         }
       } else if (isEnterKey(key)) {
-        done(currentDir);
+        if (cursor === 0) {
+          // "Select current directory"
+          done(currentDir);
+        } else {
+          // Select the highlighted subdirectory
+          const selected = items[cursor - 1];
+          done(path.join(currentDir, selected));
+        }
       }
     });
 
@@ -82,22 +95,25 @@ export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
 
     if (loading) {
       output += `  ${chalk.gray('Loading...')}`;
-    } else if (items.length === 0) {
-      output += `  ${chalk.gray('(empty — press ↵ to select this directory)')}`;
     } else {
-      const displayItems = items.slice(0, 20);
       for (let i = 0; i < displayItems.length; i++) {
         const isSelected = i === cursor;
         const icon = isSelected ? chalk.cyan('❯ ') : '  ';
-        const name = isSelected ? chalk.cyan.bold(displayItems[i]) : displayItems[i];
-        output += `  ${icon}${name}\n`;
-      }
-      if (items.length > 20) {
-        output += `  ${chalk.gray(`... and ${items.length - 20} more`)}\n`;
+
+        if (i === 0) {
+          // "Select current directory" option
+          const label = isSelected
+            ? chalk.cyan.bold(`📁 Select "${path.basename(currentDir)}"`)
+            : chalk.gray(`📁 Select "${path.basename(currentDir)}"`);
+          output += `  ${icon}${label}\n`;
+        } else {
+          const name = isSelected ? chalk.cyan.bold(displayItems[i]) : displayItems[i];
+          output += `  ${icon}${name}\n`;
+        }
       }
     }
 
-    output += `\n  ${chalk.gray('↑↓ browse  → enter  ← back  ↵ select  esc back/exit')}`;
+    output += `\n  ${chalk.gray('↑↓ browse  ↵ select  → enter dir  ← back  esc back/exit')}`;
 
     return output;
   },
