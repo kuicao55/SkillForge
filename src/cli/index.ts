@@ -11,6 +11,7 @@ import { doctorCommand } from './commands/doctor.js';
 import { agentsCommand } from './commands/agents.js';
 import { infoCommand } from './commands/info.js';
 import { configCommand } from './commands/config.js';
+import { helpCommand } from './commands/help.js';
 
 const program = new Command();
 
@@ -91,5 +92,10 @@ program
   .command('config [action] [value]')
   .description('Show or set configuration (show, set-root, reset-root)')
   .action(configCommand);
+
+program
+  .command('help')
+  .description('Show all available commands')
+  .action(helpCommand);
 
 program.parse();

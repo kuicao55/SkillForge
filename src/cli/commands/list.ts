@@ -14,34 +14,40 @@ interface ListOptions {
 export async function listCommand(_options: ListOptions): Promise<void> {
   console.log('');
 
-  // Step 1: Interactive skill list
-  const listResult = await interactiveMenu({ message: 'Select a skill:' });
-
-  if (!listResult.startsWith('info:')) return;
-
-  const skillName = listResult.slice(5);
-  const skill = await findSkill(skillName);
-  if (!skill) {
-    log.error(`Skill "${skillName}" not found.`);
-    return;
-  }
-
-  // Infer source
-  const source: SkillSource = skill.metadata.source || 'personal';
-
-  // Step 2: Show skill info with actions (loop until user goes back)
+  // Outer loop: list ↔ info
   let running = true;
   while (running) {
-    const action = await skillInfoPrompt({ skill, source, showBack: true });
+    // Step 1: Interactive skill list
+    const listResult = await interactiveMenu({ message: 'Select a skill:' });
 
-    if (action === 'back') {
+    if (!listResult.startsWith('info:')) {
       running = false;
-    } else if (action === 'link') {
-      await linkCommand(skillName, {});
-      running = false;
-    } else if (action === 'unlink') {
-      await unlinkCommand(skillName, {});
-      running = false;
+      break;
+    }
+
+    const skillName = listResult.slice(5);
+    const skill = await findSkill(skillName);
+    if (!skill) {
+      log.error(`Skill "${skillName}" not found.`);
+      continue;
+    }
+
+    const source: SkillSource = skill.metadata.source || 'personal';
+
+    // Inner loop: info → action → info
+    let inInfo = true;
+    while (inInfo) {
+      const action = await skillInfoPrompt({ skill, source, showBack: true });
+
+      if (action === 'back') {
+        inInfo = false; // back to list
+      } else if (action === 'link') {
+        await linkCommand(skillName, {});
+        // stay in info loop
+      } else if (action === 'unlink') {
+        await unlinkCommand(skillName, {});
+        // stay in info loop
+      }
     }
   }
 }

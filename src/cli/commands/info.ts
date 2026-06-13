@@ -16,12 +16,15 @@ export async function infoCommand(name: string): Promise<void> {
 
   console.log('');
 
-  // Show info with actions (no "back" in standalone mode)
-  const action = await skillInfoPrompt({ skill, source, showBack: false });
+  // Loop: info → action → info (ESC from info exits, ESC from action returns to info)
+  while (true) {
+    const action = await skillInfoPrompt({ skill, source, showBack: false });
 
-  if (action === 'link') {
-    await linkCommand(name, {});
-  } else if (action === 'unlink') {
-    await unlinkCommand(name, {});
+    if (action === 'link') {
+      await linkCommand(name, {});
+    } else if (action === 'unlink') {
+      await unlinkCommand(name, {});
+    }
+    // 'back' won't happen since showBack=false, ESC exits via prompt
   }
 }
