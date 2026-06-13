@@ -11,45 +11,51 @@ npm install -g skillforge
 ## Quick Start
 
 ```bash
-# List all discovered skills (auto-initializes on first run)
+# Browse skills interactively
 skill list
 
-# View detailed info about a skill
+# View skill details and actions
 skill info my-skill
 
 # Install a third-party skill
 skill add author/skill-name
 
-# Link a skill to a project
-skill link my-skill --agent claude --project ~/Projects/my-app
-
-# Or use interactive mode (select from menus)
+# Link a skill to a project (interactive)
 skill link my-skill
 
-# Check health
-skill doctor
+# Get help
+skill help
 ```
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `skill list` | List all discovered skills with source info |
-| `skill info <name>` | Show detailed skill info (description, path, linked projects) |
+| `skill list` | Browse skills interactively (↑↓ select, ↵ info, esc exit) |
+| `skill info <name>` | View skill details with link/unlink actions |
 | `skill add <name>` | Install a third-party skill (e.g. `skill add lovstudio/md2pdf`) |
 | `skill remove <name>` | Remove a community skill |
-| `skill link <skill>` | Link a skill (interactive mode) |
+| `skill link <skill>` | Link a skill to a project (interactive directory browser) |
 | `skill link <skill> -a <agent> -p <path>` | Link a skill (direct mode) |
-| `skill unlink <skill>` | Unlink a skill (interactive mode) |
+| `skill unlink <skill>` | Unlink a skill (interactive) |
 | `skill unlink <skill> -a <agent> -p <path>` | Unlink a skill (direct mode) |
 | `skill enable <skill> -a <agent>` | Enable a skill globally for an agent |
 | `skill disable <skill> -a <agent>` | Disable a globally enabled skill |
-| `skill doctor` | Health check — verify links and detect issues |
 | `skill agents` | List configured agents with icons |
-| `skill config` | Show or set configuration |
+| `skill doctor` | Health check — verify links and detect issues |
+| `skill config show` | Show current configuration |
 | `skill config set-root <path>` | Set projects root directory (default: ~/Developer) |
 | `skill config reset-root` | Reset projects root to default |
 | `skill init` | Re-initialize configuration (optional, auto-runs on first use) |
+| `skill help` | Show all available commands |
+
+## Interactive Controls
+
+All interactive prompts support:
+- **↑↓** — Navigate
+- **↵** — Select / Confirm
+- **ESC** — Go back (or exit if at top level)
+- **Ctrl+C** — Exit immediately
 
 ## Directory Structure
 
@@ -62,7 +68,8 @@ skill doctor
 ~/.skillforge/
 ├── agents/            # Agent YAML definitions
 ├── config.json        # User configuration
-└── registry.json      # Skill registry
+├── registry.json      # Skill registry
+└── cache/             # Temporary download cache (auto-cleaned)
 ```
 
 ## Skill Format
