@@ -46,7 +46,17 @@ export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
     }, [currentDir]);
 
     useKeypress((key) => {
-      if (isUpKey(key)) {
+      if (key.ctrl && key.name === 'c') {
+        process.exit(0);
+      } else if (key.name === 'escape') {
+        // ESC: go to parent, or exit if at root
+        const parent = path.dirname(currentDir);
+        if (parent !== currentDir) {
+          setCurrentDir(parent);
+        } else {
+          process.exit(0);
+        }
+      } else if (isUpKey(key)) {
         setCursor(cursor > 0 ? cursor - 1 : Math.max(0, items.length - 1));
       } else if (isDownKey(key)) {
         setCursor(cursor < items.length - 1 ? cursor + 1 : 0);
@@ -87,7 +97,7 @@ export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
       }
     }
 
-    output += `\n  ${chalk.gray('↑↓ browse  → enter  ← back  ↵ select')}`;
+    output += `\n  ${chalk.gray('↑↓ browse  → enter  ← back  ↵ select  esc back/exit')}`;
 
     return output;
   },

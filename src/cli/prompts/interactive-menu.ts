@@ -40,7 +40,15 @@ export const interactiveMenu = createPrompt<string, { message: string }>(
     }, []);
 
     useKeypress((key) => {
-      if (view === 'list') {
+      if (key.ctrl && key.name === 'c') {
+        process.exit(0);
+      } else if (key.name === 'escape') {
+        if (view === 'info') {
+          setView('list');
+        } else {
+          process.exit(0);
+        }
+      } else if (view === 'list') {
         if (isUpKey(key)) {
           setCursor(cursor > 0 ? cursor - 1 : Math.max(0, skills.length - 1));
         } else if (isDownKey(key)) {
@@ -58,13 +66,10 @@ export const interactiveMenu = createPrompt<string, { message: string }>(
           const selected = skills[cursor];
           const skillName = selected.skill.metadata.name;
           if (actionCursor === 0) {
-            // Back to list
             setView('list');
           } else if (actionCursor === 1) {
-            // Link
             done(`link:${skillName}`);
           } else if (actionCursor === 2) {
-            // Unlink
             done(`unlink:${skillName}`);
           }
         }
@@ -97,7 +102,7 @@ export const interactiveMenu = createPrompt<string, { message: string }>(
         const name = isSelected ? chalk.cyan.bold(skill.metadata.name) : skill.metadata.name;
         output += `  ${icon}${color('●')} ${name} ${chalk.gray(`(${sourceLabel})`)}\n`;
       }
-      output += `\n  ${chalk.gray('↑↓ navigate  ↵ view details')}`;
+      output += `\n  ${chalk.gray('↑↓ navigate  ↵ view details  esc exit')}`;
       return output;
     }
 
@@ -123,7 +128,7 @@ export const interactiveMenu = createPrompt<string, { message: string }>(
       const label = isSelected ? chalk.cyan.bold(actions[i]) : actions[i];
       output += `  ${icon}${label}\n`;
     }
-    output += `\n  ${chalk.gray('↑↓ navigate  ↵ select')}`;
+    output += `\n  ${chalk.gray('↑↓ navigate  ↵ select  esc back')}`;
 
     return output;
   },
