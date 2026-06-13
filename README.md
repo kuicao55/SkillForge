@@ -84,6 +84,30 @@ load_order:
   - global
 ```
 
+## Development
+
+```bash
+# Clone and install dependencies
+git clone <repo-url>
+cd SkillForge
+npm install
+
+# Link for local development (one-time)
+npm link
+
+# Now `skill` command is available globally
+skill list
+
+# After modifying source code, rebuild to apply changes
+npm run build
+
+# Run tests
+npm test
+
+# Unlink when done developing
+npm unlink -g skillforge
+```
+
 ## License
 
 MIT
