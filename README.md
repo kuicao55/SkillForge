@@ -12,32 +12,32 @@ npm install -g skillforge
 
 ```bash
 # Initialize SkillForge
-skillforge init
+skill init
 
 # List all discovered skills
-skillforge list
+skill list
 
 # Link a skill to a project
-skillforge link my-skill --agent claude --project ~/Projects/my-app
+skill link my-skill --agent claude --project ~/Projects/my-app
 
 # Check health
-skillforge doctor
+skill doctor
 ```
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `skillforge init` | Initialize configuration and directory structure |
-| `skillforge list` | List all discovered skills |
-| `skillforge add <name>` | Install a skill from the community |
-| `skillforge remove <name>` | Remove a community skill |
-| `skillforge link <skill> -a <agent> -p <path>` | Link a skill to an agent project |
-| `skillforge unlink <skill> -a <agent> -p <path>` | Unlink a skill |
-| `skillforge enable <skill> -a <agent>` | Enable a skill globally |
-| `skillforge disable <skill> -a <agent>` | Disable a globally enabled skill |
-| `skillforge doctor` | Health check |
-| `skillforge agents` | List configured agents |
+| `skill init` | Initialize configuration and directory structure |
+| `skill list` | List all discovered skills |
+| `skill add <name>` | Install a skill from the community |
+| `skill remove <name>` | Remove a community skill |
+| `skill link <skill> -a <agent> -p <path>` | Link a skill to an agent project |
+| `skill unlink <skill> -a <agent> -p <path>` | Unlink a skill |
+| `skill enable <skill> -a <agent>` | Enable a skill globally |
+| `skill disable <skill> -a <agent>` | Disable a globally enabled skill |
+| `skill doctor` | Health check |
+| `skill agents` | List configured agents |
 
 ## Directory Structure
 

@@ -22,7 +22,7 @@ export async function linkCommand(skillName: string, options: LinkOptions): Prom
   // Find agent
   const agent = await findAgent(options.agent);
   if (!agent) {
-    log.error(`Agent "${options.agent}" not found. Run "skillforge agents" to see available agents.`);
+    log.error(`Agent "${options.agent}" not found. Run "skill agents" to see available agents.`);
     return;
   }
 

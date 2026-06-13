@@ -7,7 +7,7 @@ export async function agentsCommand(): Promise<void> {
   const agents = await loadAgents();
 
   if (agents.length === 0) {
-    log.warn('No agents configured. Run "skillforge init" to set up default agents.');
+    log.warn('No agents configured. Run "skill init" to set up default agents.');
     return;
   }
 

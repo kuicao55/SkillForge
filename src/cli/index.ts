@@ -11,7 +11,7 @@ import { agentsCommand } from './commands/agents.js';
 const program = new Command();
 
 program
-  .name('skillforge')
+  .name('skill')
   .description('AI Skill Management System — manage, compose, and link skills across AI agents')
   .version('0.1.0');
 

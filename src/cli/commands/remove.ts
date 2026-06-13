@@ -27,7 +27,7 @@ export async function removeCommand(name: string): Promise<void> {
     for (const link of entry.links) {
       log.muted(`  → ${link.agent}: ${link.symlinkPath}`);
     }
-    log.warn('Remove the links first with: skillforge unlink');
+    log.warn('Remove the links first with: skill unlink');
     return;
   }
 

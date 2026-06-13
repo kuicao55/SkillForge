@@ -4,7 +4,7 @@
   "description": "AI Skill Management System — manage, compose, and link skills across AI agents",
   "type": "module",
   "bin": {
-    "skillforge": "./dist/cli/index.js"
+    "skill": "./dist/cli/index.js"
   },
   "main": "./dist/index.js",
   "exports": {
