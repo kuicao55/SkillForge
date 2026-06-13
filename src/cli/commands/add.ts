@@ -24,18 +24,23 @@ export async function addCommand(name: string): Promise<void> {
     await fs.remove(cacheDir);
     await fs.ensureDir(cacheDir);
 
+    let output: string;
     try {
-      execSync(`npx skills add ${name}`, {
+      output = execSync(`npx skills add ${name}`, {
         cwd: cacheDir,
-        stdio: 'pipe',
+        encoding: 'utf-8',
         timeout: 120000,
       });
-    } catch (err) {
+    } catch (err: any) {
       spinner.fail('Failed to download skill');
-      log.error(`npx skills add ${name} failed. Is the skill name correct?`);
+      log.error(`Exit code: ${err.status}`);
+      if (err.stdout) log.error(`stdout: ${err.stdout.slice(0, 500)}`);
+      if (err.stderr) log.error(`stderr: ${err.stderr.slice(0, 500)}`);
       await fs.remove(cacheDir);
       return;
     }
+
+    log.muted(`npx output (last 300 chars): ...${output.slice(-300)}`);
 
     spinner.text = 'Importing skill...';
 
