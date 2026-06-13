@@ -8,6 +8,7 @@ import { linkCommand, unlinkCommand } from './commands/link.js';
 import { enableCommand, disableCommand } from './commands/enable.js';
 import { doctorCommand } from './commands/doctor.js';
 import { agentsCommand } from './commands/agents.js';
+import { infoCommand } from './commands/info.js';
 
 const program = new Command();
 
@@ -46,15 +47,15 @@ program
 program
   .command('link <skill>')
   .description('Link a skill to an agent project')
-  .requiredOption('-a, --agent <name>', 'Agent name (e.g. claude, cursor)')
-  .requiredOption('-p, --project <path>', 'Project directory path')
+  .option('-a, --agent <name>', 'Agent name (e.g. claude, cursor)')
+  .option('-p, --project <path>', 'Project directory path')
   .action(linkCommand);
 
 program
   .command('unlink <skill>')
   .description('Unlink a skill from an agent project')
-  .requiredOption('-a, --agent <name>', 'Agent name')
-  .requiredOption('-p, --project <path>', 'Project directory path')
+  .option('-a, --agent <name>', 'Agent name')
+  .option('-p, --project <path>', 'Project directory path')
   .action(unlinkCommand);
 
 program
@@ -78,5 +79,10 @@ program
   .command('agents')
   .description('List configured agents')
   .action(agentsCommand);
+
+program
+  .command('info <name>')
+  .description('Show detailed information about a skill')
+  .action(infoCommand);
 
 program.parse();

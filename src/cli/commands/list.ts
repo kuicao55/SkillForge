@@ -8,6 +8,14 @@ interface ListOptions {
   agent?: string;
 }
 
+function getSourceLabel(skill: Skill, source: SkillSource): string {
+  if (source === 'community' && skill.metadata.package) {
+    return skill.metadata.package;
+  }
+  if (source === 'experimental') return 'experimental';
+  return 'local';
+}
+
 export async function listCommand(options: ListOptions): Promise<void> {
   const categories = await discoverSkills();
   const registry = await loadRegistry();
@@ -54,13 +62,14 @@ export async function listCommand(options: ListOptions): Promise<void> {
 
   for (const { skill, source } of filtered) {
     const color = sourceColors[source] || chalk.white;
+    const sourceLabel = getSourceLabel(skill, source);
     const tags = skill.metadata.tags?.length ? chalk.gray(` [${skill.metadata.tags.join(', ')}]`) : '';
     const version = skill.metadata.version ? chalk.gray(` v${skill.metadata.version}`) : '';
     const links = registry.skills[skill.metadata.name]?.links || [];
     const linkedAgents = links.length ? chalk.cyan(` → ${links.map(l => l.agent).join(', ')}`) : '';
 
     console.log(
-      `  ${color('●')} ${chalk.bold(skill.metadata.name)}${version}${tags}${linkedAgents}`,
+      `  ${color('●')} ${chalk.bold(skill.metadata.name)} ${chalk.gray(`(${sourceLabel})`)}${version}${tags}${linkedAgents}`,
     );
     if (skill.metadata.description) {
       console.log(`    ${chalk.gray(skill.metadata.description)}`);

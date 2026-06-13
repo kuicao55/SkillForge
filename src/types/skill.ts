@@ -9,6 +9,7 @@ export const SkillMetadataSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   source: SkillSourceSchema.optional(),
+  package: z.string().optional(), // npm package name, e.g. "lovstudio/md2pdf"
   version: z.string().optional(),
   author: z.string().optional(),
   tags: z.array(z.string()).optional(),

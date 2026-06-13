@@ -1,5 +1,6 @@
 name: claude
 type: claude-code
+icon: "\U0001F916"
 paths:
   project: .claude
   global: ~/.claude

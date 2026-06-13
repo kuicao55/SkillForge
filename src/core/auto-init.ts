@@ -7,12 +7,14 @@ const DEFAULT_AGENTS = [
   {
     name: 'claude',
     type: 'claude-code',
+    icon: '\u{1F916}',
     paths: { project: '.claude', global: '~/.claude', skills: 'skills' },
     load_order: ['project', 'global'],
   },
   {
     name: 'cursor',
     type: 'cursor',
+    icon: '✏️',
     paths: { project: '.cursor', global: '~/.cursor', skills: 'skills' },
     load_order: ['project', 'global'],
   },

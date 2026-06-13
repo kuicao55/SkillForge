@@ -21,7 +21,8 @@ export async function agentsCommand(): Promise<void> {
       entry.links.some(l => l.agent === agent.config.name),
     );
 
-    console.log(`  ${chalk.cyan('●')} ${chalk.bold(agent.config.name)} ${chalk.gray(`(${agent.config.type})`)}`);
+    const icon = agent.config.icon ? `${agent.config.icon} ` : '';
+    console.log(`  ${icon}${chalk.bold(agent.config.name)} ${chalk.gray(`(${agent.config.type})`)}`);
     console.log(`    Project: ${agent.config.paths.project}/${agent.config.paths.skills}`);
     console.log(`    Global:  ${agent.config.paths.global}/${agent.config.paths.skills}`);
     console.log(`    Skills:  ${linkedSkills.length} linked`);

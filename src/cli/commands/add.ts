@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process';
 import fs from 'fs-extra';
 import path from 'node:path';
 import os from 'node:os';
+import matter from 'gray-matter';
 import chalk from 'chalk';
 import ora from 'ora';
 import { getSkillSourceDirs } from '../../utils/paths.js';
@@ -34,36 +35,44 @@ export async function addCommand(name: string): Promise<void> {
     spinner.text = 'Importing skill...';
 
     // Find the downloaded skill directory
-    const downloadedPath = path.join(tmpDir, name);
+    const skillDirName = name.includes('/') ? name.split('/').pop()! : name;
+    const downloadedPath = path.join(tmpDir, skillDirName);
     if (!await fs.pathExists(downloadedPath)) {
-      // Try finding it in the tmpDir (some skills download to a different structure)
+      // Try finding it in the tmpDir
       const entries = await fs.readdir(tmpDir);
-      const skillDir = entries.find(e => e !== 'node_modules' && e !== 'package.json' && e !== 'package-lock.json');
-      if (skillDir) {
-        const altPath = path.join(tmpDir, skillDir);
+      const found = entries.find(e => e !== 'node_modules' && e !== 'package.json' && e !== 'package-lock.json');
+      if (found) {
+        const altPath = path.join(tmpDir, found);
         const stat = await fs.lstat(altPath);
         if (stat.isDirectory()) {
-          await copySkill(altPath, name);
+          await copySkill(altPath, skillDirName);
         }
       } else {
         spinner.fail('Downloaded skill directory not found');
         return;
       }
     } else {
-      await copySkill(downloadedPath, name);
+      await copySkill(downloadedPath, skillDirName);
     }
 
-    // Register in registry
+    // Write package name to SKILL.md frontmatter
     const communityDir = getSkillSourceDirs().community;
-    const skillMdPath = path.join(communityDir, name, 'SKILL.md');
+    const skillMdPath = path.join(communityDir, skillDirName, 'SKILL.md');
 
     if (await fs.pathExists(skillMdPath)) {
+      const raw = await fs.readFile(skillMdPath, 'utf-8');
+      const parsed = matter(raw);
+      parsed.data.package = name;
+      const updated = matter.stringify(parsed.content, parsed.data);
+      await fs.writeFile(skillMdPath, updated, 'utf-8');
+
+      // Register in registry
       const skill = await parseSkillMd(skillMdPath);
       if (skill) {
         await registerSkill({
           name: skill.metadata.name,
           source: 'community',
-          installPath: path.join(communityDir, name),
+          installPath: path.join(communityDir, skillDirName),
           installedAt: new Date().toISOString(),
           links: [],
         });
@@ -74,7 +83,7 @@ export async function addCommand(name: string): Promise<void> {
     await fs.remove(tmpDir);
 
     spinner.succeed(`Skill ${chalk.bold(name)} added to Community/`);
-    log.muted(`  Path: ${path.join(communityDir, name)}`);
+    log.muted(`  Path: ${path.join(communityDir, skillDirName)}`);
   } catch (err) {
     spinner.fail('Failed to add skill');
     log.error(err instanceof Error ? err.message : String(err));

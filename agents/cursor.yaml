@@ -1,5 +1,6 @@
 name: cursor
 type: cursor
+icon: "✏️"
 paths:
   project: .cursor
   global: ~/.cursor

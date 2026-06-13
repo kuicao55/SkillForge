@@ -21,6 +21,7 @@ export async function parseSkillMd(skillMdPath: string): Promise<Skill | null> {
       name: data.name || path.basename(path.dirname(skillMdPath)),
       description: data.description,
       source,
+      package: data.package,
       version: data.version,
       author: data.author,
       tags: data.tags,
