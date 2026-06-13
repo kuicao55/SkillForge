@@ -26,7 +26,7 @@ export async function addCommand(name: string): Promise<void> {
 
     let output: string;
     try {
-      output = execSync(`npx skills add ${name}`, {
+      output = execSync(`npx skills add ${name} --all`, {
         cwd: cacheDir,
         encoding: 'utf-8',
         timeout: 120000,
