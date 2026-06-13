@@ -2,10 +2,10 @@ import chalk from 'chalk';
 import { select } from '@inquirer/prompts';
 import { findSkill } from '../../core/skill/discovery.js';
 import { findAgent, loadAgents } from '../../core/agent/manager.js';
-import { linkSkill, unlinkSkill } from '../../core/link/manager.js';
-import { loadRegistry } from '../../core/registry/manager.js';
+import { linkSkill } from '../../core/link/manager.js';
 import { getProjectsRoot } from '../../core/config/index.js';
 import { directoryBrowser } from '../prompts/directory-browser.js';
+import { confirm } from '@inquirer/prompts';
 import { log } from '../../utils/logger.js';
 
 interface LinkOptions {
@@ -36,10 +36,23 @@ export async function linkCommand(skillName: string, options: LinkOptions): Prom
 
     if (!projectPath) {
       const rootDir = await getProjectsRoot();
-      projectPath = await directoryBrowser({
+      const selected = await directoryBrowser({
         message: 'Select project directory:',
         rootDir,
       });
+
+      // Confirm this is a project, not just browsing
+      const confirmed = await confirm({
+        message: `Link to this project?\n  ${chalk.gray(selected)}`,
+        default: true,
+      });
+
+      if (!confirmed) {
+        log.warn('Cancelled.');
+        return;
+      }
+
+      projectPath = selected;
     }
 
     if (!agentName) {
@@ -66,77 +79,6 @@ export async function linkCommand(skillName: string, options: LinkOptions): Prom
   try {
     const symlinkPath = await linkSkill(skillName, skill.path, agent, projectPath!);
     log.success(`Linked ${chalk.bold(skillName)} → ${chalk.cyan(agentName)} (${symlinkPath})`);
-  } catch (err) {
-    log.error(err instanceof Error ? err.message : String(err));
-  }
-}
-
-export async function unlinkCommand(skillName: string, options: LinkOptions): Promise<void> {
-  console.log(chalk.bold(`\n⚒  Unlinking skill: ${skillName}\n`));
-
-  const registry = await loadRegistry();
-  const entry = registry.skills[skillName];
-
-  if (!entry || entry.links.length === 0) {
-    log.error(`Skill "${skillName}" has no active links.`);
-    return;
-  }
-
-  let agentName = options.agent;
-  let projectPath = options.project;
-
-  // Interactive mode if args missing
-  if (!agentName || !projectPath) {
-    // Group links by project
-    const projectMap = new Map<string, string[]>();
-    for (const link of entry.links) {
-      const proj = link.projectPath;
-      if (!projectMap.has(proj)) {
-        projectMap.set(proj, []);
-      }
-      projectMap.get(proj)!.push(link.agent);
-    }
-
-    const projects = Array.from(projectMap.keys());
-
-    if (!projectPath) {
-      if (projects.length === 1) {
-        projectPath = projects[0];
-      } else {
-        projectPath = await select({
-          message: 'Select project to unlink from:',
-          choices: projects.map(p => ({
-            name: p === '__global__' ? 'global' : p,
-            value: p,
-          })),
-        });
-      }
-    }
-
-    // Get agents linked in this project
-    const agentsInProject = projectMap.get(projectPath) || [];
-
-    if (!agentName) {
-      if (agentsInProject.length === 1) {
-        agentName = agentsInProject[0];
-      } else {
-        agentName = await select({
-          message: 'Select agent to unlink:',
-          choices: agentsInProject.map(a => ({ name: a, value: a })),
-        });
-      }
-    }
-  }
-
-  const agent = await findAgent(agentName);
-  if (!agent) {
-    log.error(`Agent "${agentName}" not found.`);
-    return;
-  }
-
-  try {
-    await unlinkSkill(skillName, agent, projectPath!);
-    log.success(`Unlinked ${chalk.bold(skillName)} from ${chalk.cyan(agentName)}`);
   } catch (err) {
     log.error(err instanceof Error ? err.message : String(err));
   }

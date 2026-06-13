@@ -1,75 +1,23 @@
 import chalk from 'chalk';
-import { discoverSkills } from '../../core/skill/discovery.js';
-import { loadRegistry } from '../../core/registry/manager.js';
-import type { Skill, SkillSource } from '../../types/skill.js';
+import { interactiveMenu } from '../prompts/interactive-menu.js';
+import { linkCommand } from './link.js';
+import { unlinkCommand } from './unlink.js';
 
 interface ListOptions {
   source?: string;
   agent?: string;
 }
 
-function getSourceLabel(skill: Skill, source: SkillSource): string {
-  if (source === 'community' && skill.metadata.package) {
-    return skill.metadata.package;
-  }
-  if (source === 'experimental') return 'experimental';
-  return 'local';
-}
-
-export async function listCommand(options: ListOptions): Promise<void> {
-  const categories = await discoverSkills();
-  const registry = await loadRegistry();
-
-  const allSkills: Array<{ skill: Skill; source: SkillSource }> = [];
-
-  for (const skill of categories.personal) {
-    allSkills.push({ skill, source: 'personal' });
-  }
-  for (const skill of categories.community) {
-    allSkills.push({ skill, source: 'community' });
-  }
-  for (const skill of categories.experimental) {
-    allSkills.push({ skill, source: 'experimental' });
-  }
-
-  // Filter by source
-  let filtered = allSkills;
-  if (options.source) {
-    filtered = filtered.filter(s => s.source === options.source);
-  }
-
-  // Filter by agent (show only skills linked to this agent)
-  if (options.agent) {
-    filtered = filtered.filter(s => {
-      const entry = registry.skills[s.skill.metadata.name];
-      return entry?.links.some(l => l.agent === options.agent);
-    });
-  }
-
-  if (filtered.length === 0) {
-    console.log(chalk.yellow('\n  No skills found.\n'));
-    return;
-  }
-
-  console.log(chalk.bold('\n  Skills\n'));
-
-  // Source colors
-  const sourceColors: Record<string, typeof chalk> = {
-    personal: chalk.blue,
-    community: chalk.green,
-    experimental: chalk.yellow,
-  };
-
-  for (const { skill, source } of filtered) {
-    const color = sourceColors[source] || chalk.white;
-    const sourceLabel = getSourceLabel(skill, source);
-    const links = registry.skills[skill.metadata.name]?.links || [];
-    const linkedAgents = links.length ? chalk.cyan(` → ${links.map(l => l.agent).join(', ')}`) : '';
-
-    console.log(
-      `  ${color('●')} ${chalk.bold(skill.metadata.name)} ${chalk.gray(`(${sourceLabel})`)}${linkedAgents}`,
-    );
-  }
-
+export async function listCommand(_options: ListOptions): Promise<void> {
   console.log('');
+
+  const result = await interactiveMenu({ message: 'Select a skill:' });
+
+  if (result.startsWith('link:')) {
+    const skillName = result.slice(5);
+    await linkCommand(skillName, {});
+  } else if (result.startsWith('unlink:')) {
+    const skillName = result.slice(7);
+    await unlinkCommand(skillName, {});
+  }
 }

@@ -1,14 +1,17 @@
 import { execSync } from 'node:child_process';
 import fs from 'fs-extra';
 import path from 'node:path';
-import os from 'node:os';
 import matter from 'gray-matter';
 import chalk from 'chalk';
 import ora from 'ora';
-import { getSkillSourceDirs } from '../../utils/paths.js';
+import { getSkillSourceDirs, getConfigDir } from '../../utils/paths.js';
 import { parseSkillMd } from '../../core/skill/parser.js';
 import { registerSkill } from '../../core/registry/manager.js';
 import { log } from '../../utils/logger.js';
+
+function getCacheDir(): string {
+  return path.join(getConfigDir(), 'cache');
+}
 
 export async function addCommand(name: string): Promise<void> {
   console.log(chalk.bold(`\n⚒  Adding skill: ${name}\n`));
@@ -16,26 +19,26 @@ export async function addCommand(name: string): Promise<void> {
   const spinner = ora('Downloading skill...').start();
 
   try {
-    const tmpDir = path.join(os.tmpdir(), `skillforge-${Date.now()}`);
-    await fs.ensureDir(tmpDir);
+    const cacheDir = getCacheDir();
+    await fs.ensureDir(cacheDir);
 
     try {
       execSync(`npx skills add ${name}`, {
-        cwd: tmpDir,
+        cwd: cacheDir,
         stdio: 'pipe',
         timeout: 120000,
       });
     } catch (err) {
       spinner.fail('Failed to download skill');
       log.error(`npx skills add ${name} failed. Is the skill name correct?`);
-      await fs.remove(tmpDir);
+      await fs.remove(cacheDir);
       return;
     }
 
     spinner.text = 'Importing skill...';
 
     // npx skills installs to .agents/skills/<skill-name>
-    const agentsSkillsDir = path.join(tmpDir, '.agents', 'skills');
+    const agentsSkillsDir = path.join(cacheDir, '.agents', 'skills');
     let skillSourcePath: string | null = null;
     let skillDirName: string | null = null;
 
@@ -51,7 +54,7 @@ export async function addCommand(name: string): Promise<void> {
     if (!skillSourcePath || !skillDirName) {
       spinner.fail('Downloaded skill not found');
       log.error('npx skills did not create expected .agents/skills/ directory');
-      await fs.remove(tmpDir);
+      await fs.remove(cacheDir);
       return;
     }
 
@@ -83,7 +86,7 @@ export async function addCommand(name: string): Promise<void> {
     }
 
     // Cleanup
-    await fs.remove(tmpDir);
+    await fs.remove(cacheDir);
 
     spinner.succeed(`Skill ${chalk.bold(skillDirName)} added to Community/`);
     log.muted(`  Package: ${name}`);
