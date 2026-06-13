@@ -1,4 +1,4 @@
-import { createPrompt, useState, useKeypress, isEnterKey, isUpKey, isDownKey, usePrefix } from '@inquirer/core';
+import { createPrompt, useState, useKeypress, isEnterKey, isUpKey, isDownKey, usePrefix, useEffect } from '@inquirer/core';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'node:path';
@@ -34,43 +34,38 @@ export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
     const [items, setItems] = useState<string[]>([]);
     const [cursor, setCursor] = useState(0);
     const [loading, setLoading] = useState(true);
-    const prefix = usePrefix();
+    const prefix = usePrefix({});
 
-    // Load directory contents
-    useState(undefined);
-    if (loading) {
+    useEffect((setStale) => {
+      setLoading(true);
       listDirs(currentDir).then(dirs => {
         setItems(dirs);
         setCursor(0);
         setLoading(false);
       });
-    }
+    }, [currentDir]);
 
-    useKeypress(async (key, rl) => {
+    useKeypress((key) => {
       if (isUpKey(key)) {
-        setCursor(cursor > 0 ? cursor - 1 : items.length - 1);
+        setCursor(cursor > 0 ? cursor - 1 : Math.max(0, items.length - 1));
       } else if (isDownKey(key)) {
         setCursor(cursor < items.length - 1 ? cursor + 1 : 0);
       } else if (isRightKey(key) && items.length > 0) {
-        // Enter subdirectory
         const selected = items[cursor];
-        const newPath = path.join(currentDir, selected);
-        setCurrentDir(newPath);
-        setLoading(true);
+        setCurrentDir(path.join(currentDir, selected));
       } else if (isLeftKey(key)) {
-        // Go to parent
         const parent = path.dirname(currentDir);
         if (parent !== currentDir) {
           setCurrentDir(parent);
-          setLoading(true);
         }
       } else if (isEnterKey(key)) {
-        // Select current directory
         done(currentDir);
       }
     });
 
-    const relPath = currentDir.replace(config.rootDir, '').replace(/^\//, '') || '.';
+    const relPath = currentDir === config.rootDir
+      ? path.basename(config.rootDir)
+      : currentDir.replace(config.rootDir, '').replace(/^\//, '') || '.';
 
     let output = `${prefix} ${config.message}\n`;
     output += `  ${chalk.gray('📁')} ${chalk.bold(relPath)}\n\n`;
@@ -78,7 +73,7 @@ export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
     if (loading) {
       output += `  ${chalk.gray('Loading...')}`;
     } else if (items.length === 0) {
-      output += `  ${chalk.gray('(empty)')}`;
+      output += `  ${chalk.gray('(empty — press ↵ to select this directory)')}`;
     } else {
       const displayItems = items.slice(0, 20);
       for (let i = 0; i < displayItems.length; i++) {
@@ -92,7 +87,7 @@ export const directoryBrowser = createPrompt<string, DirectoryBrowserConfig>(
       }
     }
 
-    output += `\n  ${chalk.gray('↑↓ navigate  → enter dir  ← back  ↵ select')}`;
+    output += `\n  ${chalk.gray('↑↓ browse  → enter  ← back  ↵ select')}`;
 
     return output;
   },
