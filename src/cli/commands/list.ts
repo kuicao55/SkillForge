@@ -63,17 +63,12 @@ export async function listCommand(options: ListOptions): Promise<void> {
   for (const { skill, source } of filtered) {
     const color = sourceColors[source] || chalk.white;
     const sourceLabel = getSourceLabel(skill, source);
-    const tags = skill.metadata.tags?.length ? chalk.gray(` [${skill.metadata.tags.join(', ')}]`) : '';
-    const version = skill.metadata.version ? chalk.gray(` v${skill.metadata.version}`) : '';
     const links = registry.skills[skill.metadata.name]?.links || [];
     const linkedAgents = links.length ? chalk.cyan(` → ${links.map(l => l.agent).join(', ')}`) : '';
 
     console.log(
-      `  ${color('●')} ${chalk.bold(skill.metadata.name)} ${chalk.gray(`(${sourceLabel})`)}${version}${tags}${linkedAgents}`,
+      `  ${color('●')} ${chalk.bold(skill.metadata.name)} ${chalk.gray(`(${sourceLabel})`)}${linkedAgents}`,
     );
-    if (skill.metadata.description) {
-      console.log(`    ${chalk.gray(skill.metadata.description)}`);
-    }
   }
 
   console.log('');
