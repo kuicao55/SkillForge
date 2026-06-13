@@ -11,14 +11,20 @@ npm install -g skillforge
 ## Quick Start
 
 ```bash
-# Install
-npm install -g skillforge
-
 # List all discovered skills (auto-initializes on first run)
 skill list
 
+# View detailed info about a skill
+skill info my-skill
+
+# Install a third-party skill
+skill add author/skill-name
+
 # Link a skill to a project
 skill link my-skill --agent claude --project ~/Projects/my-app
+
+# Or use interactive mode (select from menus)
+skill link my-skill
 
 # Check health
 skill doctor
@@ -28,23 +34,26 @@ skill doctor
 
 | Command | Description |
 |---------|-------------|
-| `skill init` | Re-initialize configuration (optional, auto-runs on first use) |
-| `skill list` | List all discovered skills |
-| `skill add <name>` | Install a skill from the community |
+| `skill list` | List all discovered skills with source info |
+| `skill info <name>` | Show detailed skill info (description, path, linked projects) |
+| `skill add <name>` | Install a third-party skill (e.g. `skill add lovstudio/md2pdf`) |
 | `skill remove <name>` | Remove a community skill |
-| `skill link <skill> -a <agent> -p <path>` | Link a skill to an agent project |
-| `skill unlink <skill> -a <agent> -p <path>` | Unlink a skill |
-| `skill enable <skill> -a <agent>` | Enable a skill globally |
+| `skill link <skill>` | Link a skill (interactive mode) |
+| `skill link <skill> -a <agent> -p <path>` | Link a skill (direct mode) |
+| `skill unlink <skill>` | Unlink a skill (interactive mode) |
+| `skill unlink <skill> -a <agent> -p <path>` | Unlink a skill (direct mode) |
+| `skill enable <skill> -a <agent>` | Enable a skill globally for an agent |
 | `skill disable <skill> -a <agent>` | Disable a globally enabled skill |
-| `skill doctor` | Health check |
-| `skill agents` | List configured agents |
+| `skill doctor` | Health check — verify links and detect issues |
+| `skill agents` | List configured agents with icons |
+| `skill init` | Re-initialize configuration (optional, auto-runs on first use) |
 
 ## Directory Structure
 
 ```
 ~/Developer/Skills/
-├── Personal/          # Your own skills
-├── Community/         # Third-party skills
+├── Personal/          # Your own skills (source: local)
+├── Community/         # Third-party skills (source: package name)
 └── Experimental/      # Experimental skills
 
 ~/.skillforge/
@@ -63,6 +72,7 @@ description: A useful skill
 version: 1.0.0
 author: your-name
 tags: [utility, automation]
+package: author/skill-name  # auto-set by 'skill add'
 ---
 
 # Skill content
@@ -75,6 +85,7 @@ Agents are defined in `~/.skillforge/agents/*.yaml`:
 ```yaml
 name: claude
 type: claude-code
+icon: "\U0001F916"
 paths:
   project: .claude
   global: ~/.claude
