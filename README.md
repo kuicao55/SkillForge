@@ -46,6 +46,9 @@ skill doctor
 | `skill disable <skill> -a <agent>` | Disable a globally enabled skill |
 | `skill doctor` | Health check — verify links and detect issues |
 | `skill agents` | List configured agents with icons |
+| `skill config` | Show or set configuration |
+| `skill config set-root <path>` | Set projects root directory (default: ~/Developer) |
+| `skill config reset-root` | Reset projects root to default |
 | `skill init` | Re-initialize configuration (optional, auto-runs on first use) |
 
 ## Directory Structure
@@ -58,6 +61,7 @@ skill doctor
 
 ~/.skillforge/
 ├── agents/            # Agent YAML definitions
+├── config.json        # User configuration
 └── registry.json      # Skill registry
 ```
 
