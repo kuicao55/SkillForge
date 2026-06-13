@@ -20,6 +20,8 @@ export async function addCommand(name: string): Promise<void> {
 
   try {
     const cacheDir = getCacheDir();
+    // Clean cache to avoid stale state from previous runs
+    await fs.remove(cacheDir);
     await fs.ensureDir(cacheDir);
 
     try {
@@ -53,7 +55,12 @@ export async function addCommand(name: string): Promise<void> {
 
     if (!skillSourcePath || !skillDirName) {
       spinner.fail('Downloaded skill not found');
-      log.error('npx skills did not create expected .agents/skills/ directory');
+      log.error(`Expected: ${agentsSkillsDir}`);
+      log.error(`Cache dir exists: ${await fs.pathExists(cacheDir)}`);
+      if (await fs.pathExists(cacheDir)) {
+        const contents = await fs.readdir(cacheDir);
+        log.error(`Cache contents: ${contents.join(', ')}`);
+      }
       await fs.remove(cacheDir);
       return;
     }
