@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { ensureInit } from '../core/auto-init.js';
 import { initCommand } from './commands/init.js';
 import { listCommand } from './commands/list.js';
 import { addCommand } from './commands/add.js';
@@ -15,9 +16,14 @@ program
   .description('AI Skill Management System — manage, compose, and link skills across AI agents')
   .version('0.1.0');
 
+// Auto-initialize before any command
+program.hook('preAction', async () => {
+  await ensureInit();
+});
+
 program
   .command('init')
-  .description('Initialize SkillForge configuration and directory structure')
+  .description('Re-initialize SkillForge configuration (safe to run multiple times)')
   .action(initCommand);
 
 program

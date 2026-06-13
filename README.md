@@ -11,10 +11,10 @@ npm install -g skillforge
 ## Quick Start
 
 ```bash
-# Initialize SkillForge
-skill init
+# Install
+npm install -g skillforge
 
-# List all discovered skills
+# List all discovered skills (auto-initializes on first run)
 skill list
 
 # Link a skill to a project
@@ -28,7 +28,7 @@ skill doctor
 
 | Command | Description |
 |---------|-------------|
-| `skill init` | Initialize configuration and directory structure |
+| `skill init` | Re-initialize configuration (optional, auto-runs on first use) |
 | `skill list` | List all discovered skills |
 | `skill add <name>` | Install a skill from the community |
 | `skill remove <name>` | Remove a community skill |
