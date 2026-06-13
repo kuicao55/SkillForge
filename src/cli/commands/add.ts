@@ -16,7 +16,6 @@ export async function addCommand(name: string): Promise<void> {
   const spinner = ora('Downloading skill...').start();
 
   try {
-    // Use npx skills to download
     const tmpDir = path.join(os.tmpdir(), `skillforge-${Date.now()}`);
     await fs.ensureDir(tmpDir);
 
@@ -24,36 +23,40 @@ export async function addCommand(name: string): Promise<void> {
       execSync(`npx skills add ${name}`, {
         cwd: tmpDir,
         stdio: 'pipe',
-        timeout: 60000,
+        timeout: 120000,
       });
     } catch (err) {
       spinner.fail('Failed to download skill');
       log.error(`npx skills add ${name} failed. Is the skill name correct?`);
+      await fs.remove(tmpDir);
       return;
     }
 
     spinner.text = 'Importing skill...';
 
-    // Find the downloaded skill directory
-    const skillDirName = name.includes('/') ? name.split('/').pop()! : name;
-    const downloadedPath = path.join(tmpDir, skillDirName);
-    if (!await fs.pathExists(downloadedPath)) {
-      // Try finding it in the tmpDir
-      const entries = await fs.readdir(tmpDir);
-      const found = entries.find(e => e !== 'node_modules' && e !== 'package.json' && e !== 'package-lock.json');
-      if (found) {
-        const altPath = path.join(tmpDir, found);
-        const stat = await fs.lstat(altPath);
-        if (stat.isDirectory()) {
-          await copySkill(altPath, skillDirName);
-        }
-      } else {
-        spinner.fail('Downloaded skill directory not found');
-        return;
+    // npx skills installs to .agents/skills/<skill-name>
+    const agentsSkillsDir = path.join(tmpDir, '.agents', 'skills');
+    let skillSourcePath: string | null = null;
+    let skillDirName: string | null = null;
+
+    if (await fs.pathExists(agentsSkillsDir)) {
+      const entries = await fs.readdir(agentsSkillsDir, { withFileTypes: true });
+      const dirs = entries.filter(e => e.isDirectory());
+      if (dirs.length > 0) {
+        skillDirName = dirs[0].name;
+        skillSourcePath = path.join(agentsSkillsDir, skillDirName);
       }
-    } else {
-      await copySkill(downloadedPath, skillDirName);
     }
+
+    if (!skillSourcePath || !skillDirName) {
+      spinner.fail('Downloaded skill not found');
+      log.error('npx skills did not create expected .agents/skills/ directory');
+      await fs.remove(tmpDir);
+      return;
+    }
+
+    // Copy to Community/
+    await copySkill(skillSourcePath, skillDirName);
 
     // Write package name to SKILL.md frontmatter
     const communityDir = getSkillSourceDirs().community;
@@ -82,7 +85,8 @@ export async function addCommand(name: string): Promise<void> {
     // Cleanup
     await fs.remove(tmpDir);
 
-    spinner.succeed(`Skill ${chalk.bold(name)} added to Community/`);
+    spinner.succeed(`Skill ${chalk.bold(skillDirName)} added to Community/`);
+    log.muted(`  Package: ${name}`);
     log.muted(`  Path: ${path.join(communityDir, skillDirName)}`);
   } catch (err) {
     spinner.fail('Failed to add skill');
