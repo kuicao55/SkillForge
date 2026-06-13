@@ -1,11 +1,9 @@
 import { createPrompt, useState, useKeypress, isEnterKey, isUpKey, isDownKey, usePrefix, useEffect } from '@inquirer/core';
 import chalk from 'chalk';
 import { discoverSkills } from '../../core/skill/discovery.js';
-import { loadRegistry } from '../../core/registry/manager.js';
-import { loadAgents } from '../../core/agent/manager.js';
 import type { Skill, SkillSource } from '../../types/skill.js';
 
-type MenuView = 'list' | 'info' | 'actions';
+type MenuView = 'list' | 'info';
 
 interface SkillItem {
   skill: Skill;
@@ -23,12 +21,11 @@ export const interactiveMenu = createPrompt<string, { message: string }>(
     const [view, setView] = useState<MenuView>('list');
     const [skills, setSkills] = useState<SkillItem[]>([]);
     const [cursor, setCursor] = useState(0);
-    const [actionCursor, setActionCursor] = useState(0);
     const [loading, setLoading] = useState(true);
     const prefix = usePrefix({});
 
-    useEffect((setStale) => {
-      Promise.all([discoverSkills(), loadRegistry(), loadAgents()]).then(([cats, _reg, _agents]) => {
+    useEffect(() => {
+      discoverSkills().then(cats => {
         const all: SkillItem[] = [
           ...cats.personal.map(s => ({ skill: s, source: 'personal' as SkillSource })),
           ...cats.community.map(s => ({ skill: s, source: 'community' as SkillSource })),
@@ -54,24 +51,8 @@ export const interactiveMenu = createPrompt<string, { message: string }>(
         } else if (isDownKey(key)) {
           setCursor(cursor < skills.length - 1 ? cursor + 1 : 0);
         } else if (isEnterKey(key) && skills.length > 0) {
-          setView('info');
-          setActionCursor(0);
-        }
-      } else if (view === 'info') {
-        if (isUpKey(key)) {
-          setActionCursor(actionCursor > 0 ? actionCursor - 1 : 2);
-        } else if (isDownKey(key)) {
-          setActionCursor(actionCursor < 2 ? actionCursor + 1 : 0);
-        } else if (isEnterKey(key)) {
           const selected = skills[cursor];
-          const skillName = selected.skill.metadata.name;
-          if (actionCursor === 0) {
-            setView('list');
-          } else if (actionCursor === 1) {
-            done(`link:${skillName}`);
-          } else if (actionCursor === 2) {
-            done(`unlink:${skillName}`);
-          }
+          done(`info:${selected.skill.metadata.name}`);
         }
       }
     });
@@ -90,46 +71,18 @@ export const interactiveMenu = createPrompt<string, { message: string }>(
       experimental: chalk.yellow,
     };
 
-    if (view === 'list') {
-      let output = `${prefix} ${config.message}\n`;
-      const displaySkills = skills.slice(0, 20);
-      for (let i = 0; i < displaySkills.length; i++) {
-        const { skill, source } = displaySkills[i];
-        const isSelected = i === cursor;
-        const icon = isSelected ? chalk.cyan('❯ ') : '  ';
-        const color = sourceColors[source] || chalk.white;
-        const sourceLabel = getSourceLabel(skill, source);
-        const name = isSelected ? chalk.cyan.bold(skill.metadata.name) : skill.metadata.name;
-        output += `  ${icon}${color('●')} ${name} ${chalk.gray(`(${sourceLabel})`)}\n`;
-      }
-      output += `\n  ${chalk.gray('↑↓ navigate  ↵ view details  esc exit')}`;
-      return output;
-    }
-
-    // Info view
-    const selected = skills[cursor];
-    const meta = selected.skill.metadata;
-    const sourceLabel = getSourceLabel(selected.skill, selected.source);
-
-    let output = `${prefix} ${chalk.bold(meta.name)}\n\n`;
-    if (meta.description) output += `  ${meta.description}\n\n`;
-    output += `  ${chalk.gray('Source:')}   ${sourceLabel}\n`;
-    output += `  ${chalk.gray('Path:')}     ${selected.skill.path}\n`;
-    if (meta.version) output += `  ${chalk.gray('Version:')}  ${meta.version}\n`;
-    if (meta.author) output += `  ${chalk.gray('Author:')}   ${meta.author}\n`;
-    if (meta.tags?.length) output += `  ${chalk.gray('Tags:')}     ${meta.tags.join(', ')}\n`;
-
-    // Actions
-    const actions = ['← Back to list', 'Link to project', 'Unlink'];
-    output += `\n  ${chalk.gray('Actions:')}\n`;
-    for (let i = 0; i < actions.length; i++) {
-      const isSelected = i === actionCursor;
+    let output = `${prefix} ${config.message}\n`;
+    const displaySkills = skills.slice(0, 20);
+    for (let i = 0; i < displaySkills.length; i++) {
+      const { skill, source } = displaySkills[i];
+      const isSelected = i === cursor;
       const icon = isSelected ? chalk.cyan('❯ ') : '  ';
-      const label = isSelected ? chalk.cyan.bold(actions[i]) : actions[i];
-      output += `  ${icon}${label}\n`;
+      const color = sourceColors[source] || chalk.white;
+      const sourceLabel = getSourceLabel(skill, source);
+      const name = isSelected ? chalk.cyan.bold(skill.metadata.name) : skill.metadata.name;
+      output += `  ${icon}${color('●')} ${name} ${chalk.gray(`(${sourceLabel})`)}\n`;
     }
-    output += `\n  ${chalk.gray('↑↓ navigate  ↵ select  esc back')}`;
-
+    output += `\n  ${chalk.gray('↑↓ navigate  ↵ view details  esc exit')}`;
     return output;
   },
 );
