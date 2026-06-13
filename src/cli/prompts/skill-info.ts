@@ -1,4 +1,4 @@
-import { createPrompt, useState, useKeypress, isEnterKey, isUpKey, isDownKey, usePrefix } from '@inquirer/core';
+import { createPrompt, useState, useKeypress, isEnterKey, isUpKey, isDownKey, usePrefix, useEffect } from '@inquirer/core';
 import chalk from 'chalk';
 import { loadRegistry } from '../../core/registry/manager.js';
 import { loadAgents } from '../../core/agent/manager.js';
@@ -20,19 +20,21 @@ export const skillInfoPrompt = createPrompt<InfoAction, { skill: Skill; source: 
     const meta = skill.metadata;
     const [registry, setRegistry] = useState<Registry | null>(null);
     const [agents, setAgents] = useState<AgentDefinition[]>([]);
-
-    // Build action list based on whether "back" is available
-    const actions = showBack
-      ? ['← Back to list', 'Link to project', 'Unlink']
-      : ['Link to project', 'Unlink'];
+    const [loaded, setLoaded] = useState(false);
     const [cursor, setCursor] = useState(0);
     const prefix = usePrefix({});
 
-    useState(undefined);
-    Promise.all([loadRegistry(), loadAgents()]).then(([reg, ags]) => {
-      setRegistry(reg);
-      setAgents(ags);
-    });
+    const actions = showBack
+      ? ['← Back to list', 'Link to project', 'Unlink']
+      : ['Link to project', 'Unlink'];
+
+    useEffect(() => {
+      Promise.all([loadRegistry(), loadAgents()]).then(([reg, ags]) => {
+        setRegistry(reg);
+        setAgents(ags);
+        setLoaded(true);
+      });
+    }, []);
 
     useKeypress((key) => {
       if (key.ctrl && key.name === 'c') {
@@ -60,11 +62,6 @@ export const skillInfoPrompt = createPrompt<InfoAction, { skill: Skill; source: 
     });
 
     const sourceLabel = getSourceLabel(skill, source);
-    const entry = registry?.skills[meta.name];
-    const agentIconMap = new Map<string, string>();
-    for (const a of agents) {
-      agentIconMap.set(a.config.name, a.config.icon || '');
-    }
 
     let output = `${prefix} ${chalk.bold(meta.name)}\n\n`;
     if (meta.description) output += `  ${meta.description}\n\n`;
@@ -74,14 +71,21 @@ export const skillInfoPrompt = createPrompt<InfoAction, { skill: Skill; source: 
     if (meta.author) output += `  ${chalk.gray('Author:')}   ${meta.author}\n`;
     if (meta.tags?.length) output += `  ${chalk.gray('Tags:')}     ${meta.tags.join(', ')}\n`;
 
-    // Linked projects
-    if (entry && entry.links.length > 0) {
-      output += `\n  ${chalk.gray('Linked:')}\n`;
-      for (const link of entry.links) {
-        const icon = agentIconMap.get(link.agent) || '';
-        const iconStr = icon ? `${icon} ` : '';
-        const projectLabel = link.projectPath === '__global__' ? 'global' : link.projectPath;
-        output += `    → ${projectLabel} ${chalk.cyan(`(${iconStr}${link.agent})`)}\n`;
+    // Linked projects (only after data loaded)
+    if (loaded && registry) {
+      const entry = registry.skills[meta.name];
+      if (entry && entry.links.length > 0) {
+        const agentIconMap = new Map<string, string>();
+        for (const a of agents) {
+          agentIconMap.set(a.config.name, a.config.icon || '');
+        }
+        output += `\n  ${chalk.gray('Linked:')}\n`;
+        for (const link of entry.links) {
+          const icon = agentIconMap.get(link.agent) || '';
+          const iconStr = icon ? `${icon} ` : '';
+          const projectLabel = link.projectPath === '__global__' ? 'global' : link.projectPath;
+          output += `    → ${projectLabel} ${chalk.cyan(`(${iconStr}${link.agent})`)}\n`;
+        }
       }
     }
 
