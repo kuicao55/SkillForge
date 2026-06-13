@@ -1,9 +1,11 @@
 import chalk from 'chalk';
-import { select } from '@inquirer/prompts';
 import { findAgent } from '../../core/agent/manager.js';
 import { unlinkSkill } from '../../core/link/manager.js';
 import { loadRegistry } from '../../core/registry/manager.js';
+import { selectPrompt } from '../prompts/select.js';
 import { log } from '../../utils/logger.js';
+
+const customSelect = selectPrompt<string>();
 
 interface UnlinkOptions {
   agent?: string;
@@ -42,13 +44,15 @@ export async function unlinkCommand(skillName: string, options: UnlinkOptions): 
       if (projects.length === 1) {
         projectPath = projects[0];
       } else {
-        projectPath = await select({
+        const result = await customSelect({
           message: 'Select project to unlink from:',
           choices: projects.map(p => ({
             name: p === '__global__' ? 'global' : p,
             value: p,
           })),
         });
+        if (result === null) return; // ESC
+        projectPath = result;
       }
     }
 
@@ -59,10 +63,12 @@ export async function unlinkCommand(skillName: string, options: UnlinkOptions): 
       if (agentsInProject.length === 1) {
         agentName = agentsInProject[0];
       } else {
-        agentName = await select({
+        const result = await customSelect({
           message: 'Select agent to unlink:',
           choices: agentsInProject.map(a => ({ name: a, value: a })),
         });
+        if (result === null) return; // ESC
+        agentName = result;
       }
     }
   }

@@ -1,12 +1,15 @@
 import chalk from 'chalk';
-import { select } from '@inquirer/prompts';
 import { findSkill } from '../../core/skill/discovery.js';
 import { findAgent, loadAgents } from '../../core/agent/manager.js';
 import { linkSkill } from '../../core/link/manager.js';
 import { getProjectsRoot } from '../../core/config/index.js';
 import { directoryBrowser } from '../prompts/directory-browser.js';
-import { confirm } from '@inquirer/prompts';
+import { selectPrompt } from '../prompts/select.js';
+import { confirmPrompt } from '../prompts/confirm.js';
 import { log } from '../../utils/logger.js';
+
+const customSelect = selectPrompt<string>();
+const customConfirm = confirmPrompt();
 
 interface LinkOptions {
   agent?: string;
@@ -45,15 +48,16 @@ export async function linkCommand(skillName: string, options: LinkOptions): Prom
           rootDir,
         });
 
-        confirmed = await confirm({
+        const result = await customConfirm({
           message: `Link to this project?\n  ${chalk.gray(selected)}`,
-          default: true,
         });
+
+        if (result === null) return; // ESC from confirm
+        confirmed = result;
 
         if (confirmed) {
           projectPath = selected;
         }
-        // If not confirmed, loop back to directory browser
       }
     }
 
@@ -63,10 +67,13 @@ export async function linkCommand(skillName: string, options: LinkOptions): Prom
         value: a.config.name,
       }));
 
-      agentName = await select({
+      const result = await customSelect({
         message: 'Select agent:',
         choices: agentChoices,
       });
+
+      if (result === null) return; // ESC
+      agentName = result;
     }
   }
 
