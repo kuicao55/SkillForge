@@ -11,11 +11,12 @@ export default defineConfig({
   clean: true,
   dts: true,
   onSuccess: async () => {
-    // Add shebang to CLI entry
+    // Add shebang to CLI entry and make it executable
     const cliPath = path.resolve('dist/cli/index.js');
     const content = fs.readFileSync(cliPath, 'utf-8');
     if (!content.startsWith('#!')) {
       fs.writeFileSync(cliPath, '#!/usr/bin/env node\n' + content);
     }
+    fs.chmodSync(cliPath, 0o755);
   },
 });
