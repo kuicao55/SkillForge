@@ -1,14 +1,14 @@
 import chalk from 'chalk';
-import { findAgent } from '../../core/agent/manager.js';
 import { unlinkSkill } from '../../core/link/manager.js';
 import { loadRegistry } from '../../core/registry/manager.js';
 import { selectPrompt } from '../prompts/select.js';
 import { log } from '../../utils/logger.js';
+import type { LinkDestination } from '../../types/destination.js';
 
 const customSelect = selectPrompt<string>();
 
 interface UnlinkOptions {
-  agent?: string;
+  destination?: LinkDestination;
   project?: string;
 }
 
@@ -23,19 +23,19 @@ export async function unlinkCommand(skillName: string, options: UnlinkOptions): 
     return;
   }
 
-  let agentName = options.agent;
+  let destination = options.destination;
   let projectPath = options.project;
 
   // Interactive mode if args missing
-  if (!agentName || !projectPath) {
+  if (!destination || !projectPath) {
     // Group links by project
-    const projectMap = new Map<string, string[]>();
+    const projectMap = new Map<string, LinkDestination[]>();
     for (const link of entry.links) {
       const proj = link.projectPath;
       if (!projectMap.has(proj)) {
         projectMap.set(proj, []);
       }
-      projectMap.get(proj)!.push(link.agent);
+      projectMap.get(proj)!.push(link.destination);
     }
 
     const projects = Array.from(projectMap.keys());
@@ -56,32 +56,35 @@ export async function unlinkCommand(skillName: string, options: UnlinkOptions): 
       }
     }
 
-    // Get agents linked in this project
-    const agentsInProject = projectMap.get(projectPath) || [];
+    // Get destinations linked in this project
+    const destinationsInProject = projectMap.get(projectPath) || [];
 
-    if (!agentName) {
-      if (agentsInProject.length === 1) {
-        agentName = agentsInProject[0];
+    if (!destination) {
+      if (destinationsInProject.length === 1) {
+        destination = destinationsInProject[0];
       } else {
+        const destLabels: Record<string, string> = {
+          claude: '🤖 Claude Code',
+          others: '🔧 Others',
+          all: '🌐 All',
+        };
+        const choices = [
+          ...destinationsInProject.map(d => ({ name: destLabels[d] || d, value: d })),
+          { name: destLabels.all, value: 'all' },
+        ];
         const result = await customSelect({
-          message: 'Select agent to unlink:',
-          choices: agentsInProject.map(a => ({ name: a, value: a })),
+          message: 'Select destination to unlink:',
+          choices,
         });
         if (result === null) return; // ESC
-        agentName = result;
+        destination = result as LinkDestination;
       }
     }
   }
 
-  const agent = await findAgent(agentName);
-  if (!agent) {
-    log.error(`Agent "${agentName}" not found.`);
-    return;
-  }
-
   try {
-    await unlinkSkill(skillName, agent, projectPath!);
-    log.success(`Unlinked ${chalk.bold(skillName)} from ${chalk.cyan(agentName)}`);
+    await unlinkSkill(skillName, destination, projectPath!);
+    log.success(`Unlinked ${chalk.bold(skillName)} from ${chalk.cyan(destination)}`);
   } catch (err) {
     log.error(err instanceof Error ? err.message : String(err));
   }

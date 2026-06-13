@@ -1,18 +1,24 @@
 import chalk from 'chalk';
 import { findSkill } from '../../core/skill/discovery.js';
-import { findAgent, loadAgents } from '../../core/agent/manager.js';
 import { linkSkill } from '../../core/link/manager.js';
 import { getProjectsRoot } from '../../core/config/index.js';
 import { directoryBrowser } from '../prompts/directory-browser.js';
 import { selectPrompt } from '../prompts/select.js';
 import { confirmPrompt } from '../prompts/confirm.js';
 import { log } from '../../utils/logger.js';
+import type { LinkDestination } from '../../types/destination.js';
 
 const customSelect = selectPrompt<string>();
 const customConfirm = confirmPrompt();
 
+const DESTINATION_CHOICES = [
+  { name: '🤖 Claude Code (.claude/skills)', value: 'claude' as const },
+  { name: '🔧 Others (.agents/skills)', value: 'others' as const },
+  { name: '🌐 All (both directories)', value: 'all' as const },
+];
+
 interface LinkOptions {
-  agent?: string;
+  destination?: LinkDestination;
   project?: string;
 }
 
@@ -26,17 +32,11 @@ export async function linkCommand(skillName: string, options: LinkOptions): Prom
     return;
   }
 
-  let agentName = options.agent;
+  let destination = options.destination;
   let projectPath = options.project;
 
   // Interactive mode if args missing
-  if (!agentName || !projectPath) {
-    const agents = await loadAgents();
-    if (agents.length === 0) {
-      log.error('No agents configured. Run "skill init" first.');
-      return;
-    }
-
+  if (!destination || !projectPath) {
     if (!projectPath) {
       const rootDir = await getProjectsRoot();
 
@@ -61,33 +61,23 @@ export async function linkCommand(skillName: string, options: LinkOptions): Prom
       }
     }
 
-    if (!agentName) {
-      const agentChoices = agents.map(a => ({
-        name: `${a.config.icon ? a.config.icon + ' ' : ''}${a.config.name} (${a.config.type})`,
-        value: a.config.name,
-      }));
-
+    if (!destination) {
       const result = await customSelect({
-        message: 'Select agent:',
-        choices: agentChoices,
+        message: 'Select destination:',
+        choices: DESTINATION_CHOICES,
       });
 
       if (result === null) return; // ESC
-      agentName = result;
+      destination = result as LinkDestination;
     }
-  }
-
-  // Find agent
-  const agent = await findAgent(agentName);
-  if (!agent) {
-    log.error(`Agent "${agentName}" not found. Run "skill agents" to see available agents.`);
-    return;
   }
 
   // Create link
   try {
-    const symlinkPath = await linkSkill(skillName, skill.path, agent, projectPath!);
-    log.success(`Linked ${chalk.bold(skillName)} → ${chalk.cyan(agentName)} (${symlinkPath})`);
+    const symlinkPaths = await linkSkill(skillName, skill.path, destination, projectPath!);
+    for (const p of symlinkPaths) {
+      log.success(`Linked ${chalk.bold(skillName)} → ${chalk.cyan(destination)} (${p})`);
+    }
   } catch (err) {
     log.error(err instanceof Error ? err.message : String(err));
   }

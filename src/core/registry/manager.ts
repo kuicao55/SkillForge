@@ -3,10 +3,66 @@ import path from 'node:path';
 import { type Registry, type RegistryEntry, type LinkRecord, RegistrySchema } from '../../types/registry.js';
 import { getRegistryPath } from '../../utils/paths.js';
 
+/**
+ * Remove link records whose symlink files no longer exist on disk.
+ * Dangling symlinks (file exists but target gone) are kept for `skill clean` to handle.
+ * Also normalizes legacy 'all' destinations.
+ * Modifies the registry in place and saves if any changes were made.
+ */
+async function cleanStaleLinks(registry: Registry): Promise<void> {
+  let changed = false;
+
+  for (const entry of Object.values(registry.skills)) {
+    const cleanedLinks: LinkRecord[] = [];
+
+    for (const link of entry.links) {
+      // Normalize legacy 'all' destination
+      if (link.destination === 'all') {
+        changed = true;
+        // Convert to 'others' — 'claude' record is added separately via addLink
+        const normalized = { ...link, destination: 'others' as const };
+        // Check if symlink file exists (lstat doesn't follow symlinks)
+        if (await symlinkFileExists(normalized.symlinkPath)) {
+          cleanedLinks.push(normalized);
+        }
+        // else: symlink file gone, drop the record
+        continue;
+      }
+
+      // Check if symlink FILE exists (not the target — keep dangling symlinks)
+      if (await symlinkFileExists(link.symlinkPath)) {
+        cleanedLinks.push(link);
+      } else {
+        // Symlink file itself is gone — remove the record
+        changed = true;
+      }
+    }
+
+    if (cleanedLinks.length !== entry.links.length || changed) {
+      entry.links = cleanedLinks;
+    }
+  }
+
+  if (changed) {
+    await saveRegistry(registry);
+  }
+}
+
+/** Check if a symlink file exists on disk without resolving the target. */
+async function symlinkFileExists(symlinkPath: string): Promise<boolean> {
+  try {
+    await fs.lstat(symlinkPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const EMPTY_REGISTRY: Registry = { version: 1, skills: {} };
 
 /**
  * Load the registry from disk, creating it if it doesn't exist.
+ * Automatically cleans stale links (symlinks that no longer exist on disk).
  */
 export async function loadRegistry(): Promise<Registry> {
   const registryPath = getRegistryPath();
@@ -23,6 +79,7 @@ export async function loadRegistry(): Promise<Registry> {
     if (!parsed.success) {
       return EMPTY_REGISTRY;
     }
+    await cleanStaleLinks(parsed.data);
     return parsed.data;
   } catch {
     return EMPTY_REGISTRY;
@@ -62,6 +119,7 @@ export async function unregisterSkill(name: string): Promise<void> {
 /**
  * Add a link record to a skill's registry entry.
  * Auto-creates the entry if the skill isn't registered yet.
+ * The caller (linkSkill) already provides the correct destination and symlinkPath.
  */
 export async function addLink(
   name: string,
@@ -83,9 +141,9 @@ export async function addLink(
     registry.skills[name] = entry;
   }
 
-  // Avoid duplicate links
+  // Skip if this destination + projectPath already exists
   const exists = entry.links.some(
-    l => l.agent === link.agent && l.projectPath === link.projectPath && l.symlinkPath === link.symlinkPath,
+    l => l.destination === link.destination && l.projectPath === link.projectPath,
   );
   if (!exists) {
     entry.links.push(link);
@@ -105,7 +163,7 @@ function inferSource(filePath: string): 'personal' | 'community' | 'experimental
  */
 export async function removeLink(
   name: string,
-  agent: string,
+  destination: string,
   projectPath: string,
   symlinkPath: string,
 ): Promise<void> {
@@ -114,7 +172,7 @@ export async function removeLink(
   if (!entry) return;
 
   entry.links = entry.links.filter(
-    l => !(l.agent === agent && l.projectPath === projectPath && l.symlinkPath === symlinkPath),
+    l => !(l.destination === destination && l.projectPath === projectPath && l.symlinkPath === symlinkPath),
   );
   await saveRegistry(registry);
 }

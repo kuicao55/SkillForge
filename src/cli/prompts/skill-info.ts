@@ -1,10 +1,8 @@
 import { createPrompt, useState, useKeypress, isEnterKey, isUpKey, isDownKey, usePrefix, useEffect } from '@inquirer/core';
 import chalk from 'chalk';
 import { loadRegistry } from '../../core/registry/manager.js';
-import { loadAgents } from '../../core/agent/manager.js';
 import type { Skill, SkillSource } from '../../types/skill.js';
 import type { Registry } from '../../types/registry.js';
-import type { AgentDefinition } from '../../types/agent.js';
 
 export type InfoAction = 'back' | 'link' | 'unlink';
 
@@ -19,7 +17,6 @@ export const skillInfoPrompt = createPrompt<InfoAction, { skill: Skill; source: 
     const { skill, source, showBack = true } = config;
     const meta = skill.metadata;
     const [registry, setRegistry] = useState<Registry | null>(null);
-    const [agents, setAgents] = useState<AgentDefinition[]>([]);
     const [loaded, setLoaded] = useState(false);
     const [cursor, setCursor] = useState(0);
     const prefix = usePrefix({});
@@ -29,9 +26,8 @@ export const skillInfoPrompt = createPrompt<InfoAction, { skill: Skill; source: 
       : ['Link to project', 'Unlink'];
 
     useEffect(() => {
-      Promise.all([loadRegistry(), loadAgents()]).then(([reg, ags]) => {
+      loadRegistry().then((reg) => {
         setRegistry(reg);
-        setAgents(ags);
         setLoaded(true);
       });
     }, []);
@@ -75,16 +71,20 @@ export const skillInfoPrompt = createPrompt<InfoAction, { skill: Skill; source: 
     if (loaded && registry) {
       const entry = registry.skills[meta.name];
       if (entry && entry.links.length > 0) {
-        const agentIconMap = new Map<string, string>();
-        for (const a of agents) {
-          agentIconMap.set(a.config.name, a.config.icon || '');
+        // Group destinations by project
+        const projectDests = new Map<string, Set<string>>();
+        for (const link of entry.links) {
+          const proj = link.projectPath;
+          if (!projectDests.has(proj)) projectDests.set(proj, new Set());
+          projectDests.get(proj)!.add(link.destination);
         }
         output += `\n  ${chalk.gray('Linked:')}\n`;
-        for (const link of entry.links) {
-          const icon = agentIconMap.get(link.agent) || '';
-          const iconStr = icon ? `${icon} ` : '';
-          const projectLabel = link.projectPath === '__global__' ? 'global' : link.projectPath;
-          output += `    → ${projectLabel} ${chalk.cyan(`(${iconStr}${link.agent})`)}\n`;
+        for (const [proj, dests] of projectDests) {
+          const projectLabel = proj === '__global__' ? 'global' : proj;
+          const hasClaude = dests.has('claude');
+          const hasOthers = dests.has('others');
+          const label = (hasClaude && hasOthers) ? 'all' : dests.values().next().value;
+          output += `    → ${projectLabel} ${chalk.cyan(`(${label})`)}\n`;
         }
       }
     }

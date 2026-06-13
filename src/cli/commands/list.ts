@@ -8,7 +8,6 @@ import type { SkillSource } from '../../types/skill.js';
 
 interface ListOptions {
   source?: string;
-  agent?: string;
 }
 
 export async function listCommand(_options: ListOptions): Promise<void> {

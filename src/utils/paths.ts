@@ -19,11 +19,6 @@ export function getConfigDir(): string {
   return expandHome('~/.skillforge');
 }
 
-/** Agent definitions directory */
-export function getAgentsDir(): string {
-  return path.join(getConfigDir(), 'agents');
-}
-
 /** Registry file path */
 export function getRegistryPath(): string {
   return path.join(getConfigDir(), 'registry.json');

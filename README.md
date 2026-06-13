@@ -34,20 +34,30 @@ skill help
 | `skill list` | Browse skills interactively (↑↓ select, ↵ info, esc exit) |
 | `skill info <name>` | View skill details with link/unlink actions |
 | `skill add <name>` | Install a third-party skill (e.g. `skill add lovstudio/md2pdf`) |
-| `skill remove <name>` | Remove a community skill |
+| `skill remove <name>` | Remove a community skill (auto-unlinks all projects first) |
 | `skill link <skill>` | Link a skill to a project (interactive directory browser) |
-| `skill link <skill> -a <agent> -p <path>` | Link a skill (direct mode) |
+| `skill link <skill> -d <dest> -p <path>` | Link a skill (claude\|others\|all) |
 | `skill unlink <skill>` | Unlink a skill (interactive) |
-| `skill unlink <skill> -a <agent> -p <path>` | Unlink a skill (direct mode) |
-| `skill enable <skill> -a <agent>` | Enable a skill globally for an agent |
-| `skill disable <skill> -a <agent>` | Disable a globally enabled skill |
-| `skill agents` | List configured agents with icons |
-| `skill doctor` | Health check — verify links and detect issues |
+| `skill unlink <skill> -d <dest> -p <path>` | Unlink a skill (claude\|others\|all) |
+| `skill enable <skill> -d <dest>` | Enable a skill globally (claude\|others\|all) |
+| `skill disable <skill> -d <dest>` | Disable a globally enabled skill |
+| `skill doctor` | Health check — verify links and auto-fix issues |
+| `skill clean` | Clean broken links, orphan entries, and cache |
 | `skill config show` | Show current configuration |
 | `skill config set-root <path>` | Set projects root directory (default: ~/Developer) |
 | `skill config reset-root` | Reset projects root to default |
 | `skill init` | Re-initialize configuration (optional, auto-runs on first use) |
 | `skill help` | Show all available commands |
+
+## Link Destinations
+
+When linking a skill, you choose a destination:
+
+| Destination | Symlink created in | Effect |
+|-------------|-------------------|--------|
+| **claude** | `.claude/skills/` | Only Claude Code reads this |
+| **others** | `.agents/skills/` | Cursor, Codex, CodeWhale, etc. |
+| **all** | Both directories | Maximum compatibility |
 
 ## Interactive Controls
 
@@ -61,14 +71,13 @@ All interactive prompts support:
 
 ```
 ~/Developer/Skills/
-├── Personal/          # Your own skills (source: local)
-├── Community/         # Third-party skills (source: package name)
+├── Personal/          # Your own skills
+├── Community/         # Third-party skills (installed via 'skill add')
 └── Experimental/      # Experimental skills
 
 ~/.skillforge/
-├── agents/            # Agent YAML definitions
 ├── config.json        # User configuration
-├── registry.json      # Skill registry
+├── registry.json      # Skill registry (links + metadata)
 └── cache/             # Temporary download cache (auto-cleaned)
 ```
 
@@ -87,23 +96,6 @@ package: author/skill-name  # auto-set by 'skill add'
 ---
 
 # Skill content
-```
-
-## Agent Configuration
-
-Agents are defined in `~/.skillforge/agents/*.yaml`:
-
-```yaml
-name: claude
-type: claude-code
-icon: "\U0001F916"
-paths:
-  project: .claude
-  global: ~/.claude
-  skills: skills
-load_order:
-  - project
-  - global
 ```
 
 ## Development

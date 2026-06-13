@@ -34,7 +34,7 @@ describe('Registry Schema', () => {
           installedAt: new Date().toISOString(),
           links: [
             {
-              agent: 'claude',
+              destination: 'claude',
               projectPath: '/path/to/project',
               symlinkPath: '/path/to/symlink',
               createdAt: new Date().toISOString(),

@@ -1,27 +1,8 @@
 import fs from 'fs-extra';
-import path from 'node:path';
-import yaml from 'js-yaml';
-import { getConfigDir, getAgentsDir, getRegistryPath, getSkillSourceDirs } from '../utils/paths.js';
-
-const DEFAULT_AGENTS = [
-  {
-    name: 'claude',
-    type: 'claude-code',
-    icon: '\u{1F916}',
-    paths: { project: '.claude', global: '~/.claude', skills: 'skills' },
-    load_order: ['project', 'global'],
-  },
-  {
-    name: 'cursor',
-    type: 'cursor',
-    icon: '✏️',
-    paths: { project: '.cursor', global: '~/.cursor', skills: 'skills' },
-    load_order: ['project', 'global'],
-  },
-];
+import { getConfigDir, getRegistryPath, getSkillSourceDirs } from '../utils/paths.js';
 
 /**
- * Ensure SkillForge is initialized. Creates config dirs, default agents,
+ * Ensure SkillForge is initialized. Creates config dir,
  * empty registry, and skills directories if they don't exist.
  * Runs silently — only creates what's missing.
  */
@@ -40,14 +21,6 @@ export async function ensureInit(): Promise<void> {
 
   // Create ~/.skillforge/
   await fs.ensureDir(configDir);
-  await fs.ensureDir(getAgentsDir());
-
-  // Write default agent configs
-  for (const agent of DEFAULT_AGENTS) {
-    const filePath = path.join(getAgentsDir(), `${agent.name}.yaml`);
-    const content = yaml.dump(agent, { lineWidth: 120 });
-    await fs.writeFile(filePath, content, 'utf-8');
-  }
 
   // Initialize empty registry
   await fs.writeFile(

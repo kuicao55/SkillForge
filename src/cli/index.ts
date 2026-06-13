@@ -8,7 +8,7 @@ import { linkCommand } from './commands/link.js';
 import { unlinkCommand } from './commands/unlink.js';
 import { enableCommand, disableCommand } from './commands/enable.js';
 import { doctorCommand } from './commands/doctor.js';
-import { agentsCommand } from './commands/agents.js';
+import { cleanCommand } from './commands/clean.js';
 import { infoCommand } from './commands/info.js';
 import { configCommand } from './commands/config.js';
 import { helpCommand } from './commands/help.js';
@@ -34,7 +34,6 @@ program
   .command('list')
   .description('List all discovered skills')
   .option('-s, --source <type>', 'Filter by source: personal, community, experimental')
-  .option('-a, --agent <name>', 'Filter by linked agent')
   .action(listCommand);
 
 program
@@ -49,29 +48,29 @@ program
 
 program
   .command('link <skill>')
-  .description('Link a skill to an agent project')
-  .option('-a, --agent <name>', 'Agent name (e.g. claude, cursor)')
+  .description('Link a skill to a project')
+  .option('-d, --destination <type>', 'Destination: claude, others, all')
   .option('-p, --project <path>', 'Project directory path')
   .action(linkCommand);
 
 program
   .command('unlink <skill>')
-  .description('Unlink a skill from an agent project')
-  .option('-a, --agent <name>', 'Agent name')
+  .description('Unlink a skill from a project')
+  .option('-d, --destination <type>', 'Destination: claude, others, all')
   .option('-p, --project <path>', 'Project directory path')
   .action(unlinkCommand);
 
 program
   .command('enable <skill>')
-  .description('Enable a skill globally for an agent')
-  .requiredOption('-a, --agent <name>', 'Agent name')
-  .action((skill, opts) => enableCommand(skill, opts.agent));
+  .description('Enable a skill globally')
+  .requiredOption('-d, --destination <type>', 'Destination: claude, others, all')
+  .action((skill, opts) => enableCommand(skill, opts.destination));
 
 program
   .command('disable <skill>')
   .description('Disable a globally enabled skill')
-  .requiredOption('-a, --agent <name>', 'Agent name')
-  .action((skill, opts) => disableCommand(skill, opts.agent));
+  .requiredOption('-d, --destination <type>', 'Destination: claude, others, all')
+  .action((skill, opts) => disableCommand(skill, opts.destination));
 
 program
   .command('doctor')
@@ -79,9 +78,9 @@ program
   .action(doctorCommand);
 
 program
-  .command('agents')
-  .description('List configured agents')
-  .action(agentsCommand);
+  .command('clean')
+  .description('Clean up broken links, orphan entries, and cache')
+  .action(cleanCommand);
 
 program
   .command('info <name>')

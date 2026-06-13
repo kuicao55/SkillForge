@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { LinkDestinationSchema } from './destination.js';
 
 // --- Zod Schemas ---
 
 export const LinkRecordSchema = z.object({
-  agent: z.string(),
+  destination: LinkDestinationSchema,
   projectPath: z.string(),
   symlinkPath: z.string(),
   createdAt: z.string(),
