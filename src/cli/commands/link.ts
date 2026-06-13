@@ -36,23 +36,25 @@ export async function linkCommand(skillName: string, options: LinkOptions): Prom
 
     if (!projectPath) {
       const rootDir = await getProjectsRoot();
-      const selected = await directoryBrowser({
-        message: 'Select project directory:',
-        rootDir,
-      });
 
-      // Confirm this is a project, not just browsing
-      const confirmed = await confirm({
-        message: `Link to this project?\n  ${chalk.gray(selected)}`,
-        default: true,
-      });
+      // Loop until user confirms a project
+      let confirmed = false;
+      while (!confirmed) {
+        const selected = await directoryBrowser({
+          message: 'Select project directory:',
+          rootDir,
+        });
 
-      if (!confirmed) {
-        log.warn('Cancelled.');
-        return;
+        confirmed = await confirm({
+          message: `Link to this project?\n  ${chalk.gray(selected)}`,
+          default: true,
+        });
+
+        if (confirmed) {
+          projectPath = selected;
+        }
+        // If not confirmed, loop back to directory browser
       }
-
-      projectPath = selected;
     }
 
     if (!agentName) {
