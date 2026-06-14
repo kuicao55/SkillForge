@@ -5,7 +5,7 @@ AI Skill Management System — manage, compose, and link skills across AI agents
 ## Installation
 
 ```bash
-npm install -g skillforge
+npm install -g github:kuicao55/SkillForge
 ```
 
 ## Quick Start
