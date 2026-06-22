@@ -5,6 +5,7 @@ import { skillInfoPrompt } from '../prompts/skill-info.js';
 import { findSkill, findSkillsByTag } from '../../core/skill/discovery.js';
 import { linkCommand, batchLinkCommand, selectProject, selectDestination } from './link.js';
 import { unlinkCommand, batchUnlinkCommand } from './unlink.js';
+import { loadRegistry } from '../../core/registry/manager.js';
 import { log } from '../../utils/logger.js';
 import { selectPrompt } from '../prompts/select.js';
 import type { SkillSource } from '../../types/skill.js';
@@ -70,7 +71,9 @@ async function tagFlow(initialTag?: string): Promise<void> {
     return;
   }
 
-  // Step 3: Show options: batch actions + individual skills
+  // Step 3: Load registry to show linked projects
+  const registry = await loadRegistry();
+
   const BATCH_LINK = `🔗 Link all ${items.length} skills to project...`;
   const BATCH_UNLINK = `🔓 Unlink all ${items.length} skills from project...`;
   const BACK = '← Back';
@@ -78,10 +81,22 @@ async function tagFlow(initialTag?: string): Promise<void> {
   const choices = [
     { name: BATCH_LINK, value: '__link_all__' },
     { name: BATCH_UNLINK, value: '__unlink_all__' },
-    ...items.map(item => ({
-      name: `${item.skill.metadata.name} ${chalk.gray(`(${item.source})`)}`,
-      value: item.skill.metadata.name,
-    })),
+    ...items.map(item => {
+      const entry = registry.skills[item.skill.metadata.name];
+      let linkedInfo = '';
+      if (entry && entry.links.length > 0) {
+        const projects = new Set<string>();
+        for (const link of entry.links) {
+          const proj = link.projectPath === '__global__' ? 'global' : link.projectPath;
+          projects.add(proj);
+        }
+        linkedInfo = ` ${chalk.green('→')} ${chalk.gray(Array.from(projects).join(', '))}`;
+      }
+      return {
+        name: `${item.skill.metadata.name} ${chalk.gray(`(${item.source})`)}${linkedInfo}`,
+        value: item.skill.metadata.name,
+      };
+    }),
     { name: BACK, value: '__back__' },
   ];
 
