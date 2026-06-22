@@ -15,7 +15,6 @@ export async function helpCommand(): Promise<void> {
     { cmd: 'skill link --tag <tag> -d <dest> -p <path>', desc: 'Batch link all skills with tag' },
     { cmd: 'skill unlink <skill>', desc: 'Unlink a skill (interactive)' },
     { cmd: 'skill unlink <skill> -d <dest> -p <path>', desc: 'Unlink a skill (claude|others|all)' },
-    { cmd: 'skill unlink --tag <tag> -d <dest> -p <path>', desc: 'Batch unlink all skills with tag' },
     { cmd: 'skill enable <skill> -d <dest>', desc: 'Enable a skill globally (claude|others|all)' },
     { cmd: 'skill disable <skill> -d <dest>', desc: 'Disable a globally enabled skill' },
     { cmd: 'skill doctor', desc: 'Health check — verify links' },
