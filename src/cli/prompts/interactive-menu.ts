@@ -61,7 +61,7 @@ export const interactiveMenu = createPrompt<string, InteractiveMenuConfig>(
     // Build display items: optional batch actions + skill list
     const displayItems: Array<{ type: 'action' | 'skill'; value: string; label: string; skill?: SkillItem }> = [];
     if (showBatchActions && filterTag) {
-      displayItems.push({ type: 'action', value: `${LINK_ALL}:${filterTag}`, label: `Link all to project...` });
+      displayItems.push({ type: 'action', value: `${LINK_ALL}:${filterTag}`, label: `🔗 Link all to project...` });
     }
     for (const item of skills) {
       if (item.skill.metadata) {
