@@ -24,7 +24,7 @@ interface LinkOptions {
 }
 
 /** Interactive project selection. Returns the selected path or null if cancelled. */
-export async function selectProject(): Promise<string | null> {
+export async function selectProject(verb = 'Link'): Promise<string | null> {
   const rootDir = await getProjectsRoot();
 
   let confirmed = false;
@@ -35,7 +35,7 @@ export async function selectProject(): Promise<string | null> {
     });
 
     const result = await customConfirm({
-      message: `Link to this project?\n  ${chalk.gray(selected)}`,
+      message: `${verb} to/from this project?\n  ${chalk.gray(selected)}`,
     });
 
     if (result === null) return null;

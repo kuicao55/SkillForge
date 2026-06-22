@@ -133,7 +133,7 @@ export async function batchUnlinkCommand(tag: string, options: UnlinkOptions): P
   let projectPath = options.project;
 
   if (!projectPath) {
-    projectPath = await selectProject() ?? undefined;
+    projectPath = await selectProject('Unlink') ?? undefined;
     if (!projectPath) return;
   }
 
