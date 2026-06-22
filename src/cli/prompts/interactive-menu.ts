@@ -27,7 +27,7 @@ function getSourceLabel(skill: Skill, source: SkillSource): string {
 }
 
 // Sentinel value for batch action
-const LINK_ALL = '__link_all__';
+const LINK_ALL = 'link-all';
 
 export const interactiveMenu = createPrompt<string, InteractiveMenuConfig>(
   (config, done) => {
