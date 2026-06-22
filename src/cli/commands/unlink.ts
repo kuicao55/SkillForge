@@ -129,17 +129,61 @@ export async function batchUnlinkCommand(tag: string, options: UnlinkOptions): P
   }
   console.log('');
 
+  // Collect all unique projects these skills are linked to
+  const projectDests = new Map<string, Set<string>>();
+  for (const item of linkedItems) {
+    const entry = registry.skills[item.skill.metadata.name];
+    if (!entry) continue;
+    for (const link of entry.links) {
+      const proj = link.projectPath;
+      if (!projectDests.has(proj)) projectDests.set(proj, new Set());
+      projectDests.get(proj)!.add(link.destination);
+    }
+  }
+
   let destination = options.destination;
   let projectPath = options.project;
 
+  // Select project from linked projects (not directory browser)
   if (!projectPath) {
-    projectPath = await selectProject('Unlink') ?? undefined;
-    if (!projectPath) return;
+    const projects = Array.from(projectDests.keys());
+    if (projects.length === 1) {
+      projectPath = projects[0];
+    } else {
+      const result = await customSelect({
+        message: 'Select project to unlink from:',
+        choices: projects.map(p => ({
+          name: p === '__global__' ? 'global' : p,
+          value: p,
+        })),
+      });
+      if (result === null) return;
+      projectPath = result;
+    }
   }
 
+  // Select destination from linked destinations (not all destinations)
   if (!destination) {
-    destination = await selectDestination() ?? undefined;
-    if (!destination) return;
+    const destsInProject = projectDests.get(projectPath) || new Set();
+    if (destsInProject.size === 1) {
+      destination = destsInProject.values().next().value as LinkDestination;
+    } else {
+      const destLabels: Record<string, string> = {
+        claude: '🤖 Claude Code',
+        others: '🔧 Others',
+        all: '🌐 All',
+      };
+      const choices = [
+        ...Array.from(destsInProject).map(d => ({ name: destLabels[d] || d, value: d })),
+        { name: destLabels.all, value: 'all' },
+      ];
+      const result = await customSelect({
+        message: 'Select destination to unlink:',
+        choices,
+      });
+      if (result === null) return;
+      destination = result as LinkDestination;
+    }
   }
 
   // Batch unlink
