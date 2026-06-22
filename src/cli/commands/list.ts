@@ -61,13 +61,17 @@ async function tagFlow(initialTag?: string): Promise<void> {
 
   if (!tag) return;
 
-  // Step 2: Show filtered skill list with batch actions
+  // Step 2: Pre-load skills for this tag
+  const tagSkills = await findSkillsByTag(tag);
+
+  // Step 3: Show filtered skill list with batch actions
   let running = true;
   while (running) {
     const listResult = await interactiveMenu({
       message: `Skills tagged "${tag}":`,
       filterTag: tag,
       showBatchActions: true,
+      skills: tagSkills,
     });
 
     if (listResult.startsWith('link-all:')) {
