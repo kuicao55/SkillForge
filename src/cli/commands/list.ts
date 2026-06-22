@@ -3,11 +3,13 @@ import { interactiveMenu } from '../prompts/interactive-menu.js';
 import { tagBrowser } from '../prompts/tag-browser.js';
 import { skillInfoPrompt } from '../prompts/skill-info.js';
 import { findSkill, findSkillsByTag } from '../../core/skill/discovery.js';
-import { linkCommand, batchLinkCommand } from './link.js';
+import { linkCommand, batchLinkCommand, selectProject, selectDestination } from './link.js';
 import { unlinkCommand, batchUnlinkCommand } from './unlink.js';
-import { selectProject, selectDestination } from './link.js';
 import { log } from '../../utils/logger.js';
+import { selectPrompt } from '../prompts/select.js';
 import type { SkillSource } from '../../types/skill.js';
+
+const customSelect = selectPrompt<string>();
 
 interface ListOptions {
   source?: string;
@@ -61,35 +63,58 @@ async function tagFlow(initialTag?: string): Promise<void> {
 
   if (!tag) return;
 
-  // Step 2: Show filtered skill list with batch actions
+  // Step 2: Get skills with this tag
+  const items = await findSkillsByTag(tag);
+  if (items.length === 0) {
+    log.error(`No skills found with tag "${tag}".`);
+    return;
+  }
+
+  // Step 3: Show options: batch actions + individual skills
+  const BATCH_LINK = `🔗 Link all ${items.length} skills to project...`;
+  const BATCH_UNLINK = `🔓 Unlink all ${items.length} skills from project...`;
+  const BACK = '← Back';
+
+  const choices = [
+    { name: BATCH_LINK, value: '__link_all__' },
+    { name: BATCH_UNLINK, value: '__unlink_all__' },
+    ...items.map(item => ({
+      name: `${item.skill.metadata.name} ${chalk.gray(`(${item.source})`)}`,
+      value: item.skill.metadata.name,
+    })),
+    { name: BACK, value: '__back__' },
+  ];
+
   let running = true;
   while (running) {
-    const listResult = await interactiveMenu({
-      message: `Skills tagged "${tag}":`,
-      filterTag: tag,
-      showBatchActions: true,
+    console.log('');
+    console.log(chalk.bold(`  Skills tagged "${tag}":`));
+    console.log('');
+
+    const result = await customSelect({
+      message: `Select action (${items.length} skills):`,
+      choices,
     });
 
-    if (listResult.startsWith('link-all:')) {
-      // Batch link all skills with this tag
+    if (result === null || result === '__back__') {
+      running = false;
+    } else if (result === '__link_all__') {
       const projectPath = await selectProject();
       if (!projectPath) continue;
       const destination = await selectDestination();
       if (!destination) continue;
       await batchLinkCommand(tag, { project: projectPath, destination });
-    } else if (listResult.startsWith('unlink-all:')) {
-      // Batch unlink all skills with this tag
+    } else if (result === '__unlink_all__') {
       const projectPath = await selectProject();
       if (!projectPath) continue;
       const destination = await selectDestination();
       if (!destination) continue;
       await batchUnlinkCommand(tag, { project: projectPath, destination });
-    } else if (listResult.startsWith('info:')) {
+    } else {
       // Individual skill view
-      const skillName = listResult.slice(5);
-      const skill = await findSkill(skillName);
+      const skill = await findSkill(result);
       if (!skill) {
-        log.error(`Skill "${skillName}" not found.`);
+        log.error(`Skill "${result}" not found.`);
         continue;
       }
 
@@ -102,13 +127,11 @@ async function tagFlow(initialTag?: string): Promise<void> {
         if (action === 'back') {
           inInfo = false;
         } else if (action === 'link') {
-          await linkCommand(skillName, {});
+          await linkCommand(result, {});
         } else if (action === 'unlink') {
-          await unlinkCommand(skillName, {});
+          await unlinkCommand(result, {});
         }
       }
-    } else {
-      running = false;
     }
   }
 }
