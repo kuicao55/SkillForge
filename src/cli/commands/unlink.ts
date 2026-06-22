@@ -51,7 +51,7 @@ export async function unlinkCommand(skillName: string, options: UnlinkOptions): 
             value: p,
           })),
         });
-        if (result === null) return; // ESC
+        if (result === null) return;
         projectPath = result;
       }
     }
@@ -76,7 +76,7 @@ export async function unlinkCommand(skillName: string, options: UnlinkOptions): 
           message: 'Select destination to unlink:',
           choices,
         });
-        if (result === null) return; // ESC
+        if (result === null) return;
         destination = result as LinkDestination;
       }
     }
