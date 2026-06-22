@@ -33,7 +33,7 @@ program
 program
   .command('list')
   .description('List all discovered skills')
-  .option('-s, --source <type>', 'Filter by source: personal, community, experimental')
+  .option('-s, --source <type>', 'Filter by source: personal, community, curated, experimental')
   .action(listCommand);
 
 program

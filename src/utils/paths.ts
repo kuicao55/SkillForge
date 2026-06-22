@@ -30,6 +30,7 @@ export function getSkillSourceDirs() {
   return {
     personal: path.join(root, 'Personal'),
     community: path.join(root, 'Community'),
+    curated: path.join(root, 'Curated'),
     experimental: path.join(root, 'Experimental'),
   };
 }

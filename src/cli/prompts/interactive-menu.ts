@@ -12,6 +12,7 @@ interface SkillItem {
 
 function getSourceLabel(skill: Skill, source: SkillSource): string {
   if (source === 'community' && skill.metadata.package) return skill.metadata.package;
+  if (source === 'curated') return 'curated';
   if (source === 'experimental') return 'experimental';
   return 'local';
 }
@@ -29,6 +30,7 @@ export const interactiveMenu = createPrompt<string, { message: string }>(
         const all: SkillItem[] = [
           ...cats.personal.map(s => ({ skill: s, source: 'personal' as SkillSource })),
           ...cats.community.map(s => ({ skill: s, source: 'community' as SkillSource })),
+          ...cats.curated.map(s => ({ skill: s, source: 'curated' as SkillSource })),
           ...cats.experimental.map(s => ({ skill: s, source: 'experimental' as SkillSource })),
         ];
         setSkills(all);
@@ -68,6 +70,7 @@ export const interactiveMenu = createPrompt<string, { message: string }>(
     const sourceColors: Record<string, typeof chalk> = {
       personal: chalk.blue,
       community: chalk.green,
+      curated: chalk.magenta,
       experimental: chalk.yellow,
     };
 
@@ -80,7 +83,8 @@ export const interactiveMenu = createPrompt<string, { message: string }>(
       const color = sourceColors[source] || chalk.white;
       const sourceLabel = getSourceLabel(skill, source);
       const name = isSelected ? chalk.cyan.bold(skill.metadata.name) : skill.metadata.name;
-      output += `  ${icon}${color('●')} ${name} ${chalk.gray(`(${sourceLabel})`)}\n`;
+      const tags = skill.metadata.tags?.length ? ` ${chalk.gray(`[${skill.metadata.tags.join(', ')}]`)}` : '';
+      output += `  ${icon}${color('●')} ${name} ${chalk.gray(`(${sourceLabel})`)}${tags}\n`;
     }
     output += `\n  ${chalk.gray('↑↓ navigate  ↵ view details  esc exit')}`;
     return output;

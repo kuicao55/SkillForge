@@ -10,13 +10,14 @@ import { parseSkillMd, isSkillDir } from './parser.js';
 export async function discoverSkills(): Promise<SkillCategory> {
   const dirs = getSkillSourceDirs();
 
-  const [personal, community, experimental] = await Promise.all([
+  const [personal, community, curated, experimental] = await Promise.all([
     scanDirForSkills(dirs.personal, 'personal'),
     scanDirForSkills(dirs.community, 'community'),
+    scanDirForSkills(dirs.curated, 'curated'),
     scanDirForSkills(dirs.experimental, 'experimental'),
   ]);
 
-  return { personal, community, experimental };
+  return { personal, community, curated, experimental };
 }
 
 /**
@@ -24,7 +25,7 @@ export async function discoverSkills(): Promise<SkillCategory> {
  */
 export async function findSkill(name: string): Promise<Skill | null> {
   const all = await discoverSkills();
-  const allSkills = [...all.personal, ...all.community, ...all.experimental];
+  const allSkills = [...all.personal, ...all.community, ...all.curated, ...all.experimental];
   return allSkills.find(s => s.metadata.name === name) || null;
 }
 
@@ -33,7 +34,7 @@ export async function findSkill(name: string): Promise<Skill | null> {
  */
 async function scanDirForSkills(
   dirPath: string,
-  _source: 'personal' | 'community' | 'experimental',
+  _source: 'personal' | 'community' | 'curated' | 'experimental',
 ): Promise<Skill[]> {
   if (!await fs.pathExists(dirPath)) {
     return [];

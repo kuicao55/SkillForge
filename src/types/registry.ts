@@ -13,7 +13,7 @@ export type LinkRecord = z.infer<typeof LinkRecordSchema>;
 
 export const RegistryEntrySchema = z.object({
   name: z.string(),
-  source: z.enum(['personal', 'community', 'experimental']),
+  source: z.enum(['personal', 'community', 'curated', 'experimental']),
   installPath: z.string(),
   installedAt: z.string(),
   links: z.array(LinkRecordSchema),

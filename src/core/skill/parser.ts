@@ -49,6 +49,7 @@ function inferSource(skillMdPath: string): SkillSource {
   const normalized = skillMdPath.replace(/\\/g, '/');
   if (normalized.includes('/Personal/')) return 'personal';
   if (normalized.includes('/Community/')) return 'community';
+  if (normalized.includes('/Curated/')) return 'curated';
   if (normalized.includes('/Experimental/')) return 'experimental';
   return 'personal'; // default
 }

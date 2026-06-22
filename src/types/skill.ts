@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // --- Zod Schemas ---
 
-export const SkillSourceSchema = z.enum(['personal', 'community', 'experimental']);
+export const SkillSourceSchema = z.enum(['personal', 'community', 'curated', 'experimental']);
 export type SkillSource = z.infer<typeof SkillSourceSchema>;
 
 export const SkillMetadataSchema = z.object({
@@ -26,6 +26,7 @@ export type Skill = z.infer<typeof SkillSchema>;
 export const SkillCategorySchema = z.object({
   personal: z.array(SkillSchema),
   community: z.array(SkillSchema),
+  curated: z.array(SkillSchema),
   experimental: z.array(SkillSchema),
 });
 export type SkillCategory = z.infer<typeof SkillCategorySchema>;

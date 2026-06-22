@@ -8,6 +8,7 @@ export type InfoAction = 'back' | 'link' | 'unlink';
 
 function getSourceLabel(skill: Skill, source: SkillSource): string {
   if (source === 'community' && skill.metadata.package) return skill.metadata.package;
+  if (source === 'curated') return 'curated';
   if (source === 'experimental') return 'experimental';
   return 'local';
 }

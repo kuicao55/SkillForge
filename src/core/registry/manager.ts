@@ -151,9 +151,10 @@ export async function addLink(
   }
 }
 
-function inferSource(filePath: string): 'personal' | 'community' | 'experimental' {
+function inferSource(filePath: string): 'personal' | 'community' | 'curated' | 'experimental' {
   const normalized = filePath.replace(/\\/g, '/');
   if (normalized.includes('/Community/')) return 'community';
+  if (normalized.includes('/Curated/')) return 'curated';
   if (normalized.includes('/Experimental/')) return 'experimental';
   return 'personal';
 }
