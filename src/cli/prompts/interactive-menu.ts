@@ -17,6 +17,7 @@ interface InteractiveMenuConfig {
 }
 
 function getSourceLabel(skill: Skill, source: SkillSource): string {
+  if (!skill.metadata) return 'unknown';
   if (source === 'community' && skill.metadata.package) return skill.metadata.package;
   if (source === 'curated') return 'curated';
   if (source === 'experimental') return 'experimental';
@@ -42,7 +43,7 @@ export const interactiveMenu = createPrompt<string, InteractiveMenuConfig>(
           ...cats.community.map(s => ({ skill: s, source: 'community' as SkillSource })),
           ...cats.curated.map(s => ({ skill: s, source: 'curated' as SkillSource })),
           ...cats.experimental.map(s => ({ skill: s, source: 'experimental' as SkillSource })),
-        ];
+        ].filter(item => item.skill.metadata); // Filter out skills with missing metadata
         if (filterTag) {
           all = all.filter(item => item.skill.metadata.tags?.includes(filterTag));
         }
@@ -57,7 +58,9 @@ export const interactiveMenu = createPrompt<string, InteractiveMenuConfig>(
       displayItems.push({ type: 'action', value: `${LINK_ALL}:${filterTag}`, label: `🔗 Link all to project...` });
     }
     for (const item of skills) {
-      displayItems.push({ type: 'skill', value: `info:${item.skill.metadata.name}`, label: item.skill.metadata.name, skill: item });
+      if (item.skill.metadata) {
+        displayItems.push({ type: 'skill', value: `info:${item.skill.metadata.name}`, label: item.skill.metadata.name, skill: item });
+      }
     }
 
     useKeypress((key) => {
@@ -106,7 +109,7 @@ export const interactiveMenu = createPrompt<string, InteractiveMenuConfig>(
       if (item.type === 'action') {
         const label = isSelected ? chalk.cyan.bold(item.label) : item.label;
         output += `  ${icon}${label}\n`;
-      } else if (item.skill) {
+      } else if (item.skill?.metadata) {
         const color = sourceColors[item.skill.source] || chalk.white;
         const sourceLabel = getSourceLabel(item.skill, item.skill.source);
         const name = isSelected ? chalk.cyan.bold(item.skill.metadata.name) : item.skill.metadata.name;
