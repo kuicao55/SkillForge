@@ -34,6 +34,7 @@ program
   .command('list')
   .description('List all discovered skills')
   .option('-s, --source <type>', 'Filter by source: personal, community, curated, experimental')
+  .option('-t, --tag [value]', 'Filter by tag, or show tag browser if no value given')
   .action(listCommand);
 
 program
@@ -47,15 +48,17 @@ program
   .action(removeCommand);
 
 program
-  .command('link <skill>')
+  .command('link [skill]')
   .description('Link a skill to a project')
+  .option('-t, --tag <value>', 'Link all skills with this tag (skill name not required)')
   .option('-d, --destination <type>', 'Destination: claude, others, all')
   .option('-p, --project <path>', 'Project directory path')
   .action(linkCommand);
 
 program
-  .command('unlink <skill>')
+  .command('unlink [skill]')
   .description('Unlink a skill from a project')
+  .option('-t, --tag <value>', 'Unlink all skills with this tag (skill name not required)')
   .option('-d, --destination <type>', 'Destination: claude, others, all')
   .option('-p, --project <path>', 'Project directory path')
   .action(unlinkCommand);
