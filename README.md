@@ -17,8 +17,12 @@ skill list
 # View skill details and actions
 skill info my-skill
 
-# Install a third-party skill
+# Install a third-party skill from the registry
 skill add author/skill-name
+
+# Or install specific skill(s) straight from a Git repository
+skill add https://github.com/twostraws/swiftui-agent-skill --skill swiftui-pro
+skill add https://github.com/owner/repo --skill foo,bar
 
 # Link a skill to a project (interactive)
 skill link my-skill
@@ -33,7 +37,8 @@ skill help
 |---------|-------------|
 | `skill list` | Browse skills interactively (↑↓ select, ↵ info, esc exit) |
 | `skill info <name>` | View skill details with link/unlink actions |
-| `skill add <name>` | Install a third-party skill (e.g. `skill add lovstudio/md2pdf`) |
+| `skill add <source>` | Install skill(s) from a registry name or Git URL (e.g. `skill add lovstudio/md2pdf`) |
+| `skill add <url> --skill <name>` | Install only the named skill(s) from a Git repo; `-s` is repeatable and accepts commas |
 | `skill remove <name>` | Remove a community skill (auto-unlinks all projects first) |
 | `skill link <skill>` | Link a skill to a project (interactive directory browser) |
 | `skill link <skill> -d <dest> -p <path>` | Link a skill (claude\|others\|all) |
@@ -48,6 +53,23 @@ skill help
 | `skill config reset-root` | Reset projects root to default |
 | `skill init` | Re-initialize configuration (optional, auto-runs on first use) |
 | `skill help` | Show all available commands |
+
+### Installing from a Git repository
+
+`skill add` accepts either a registry name (`owner/repo`) or a Git URL
+(`https://github.com/owner/repo`, with `.git`, or `git@github.com:owner/repo.git`).
+Use `--skill` (`-s`) to install only specific skills from the repository:
+
+```bash
+skill add https://github.com/twostraws/swiftui-agent-skill --skill swiftui-pro
+
+# Repeatable, and comma-separated values are supported
+skill add git@github.com:owner/repo.git --skill foo,bar
+```
+
+Every skill downloaded under `.agents/skills/` is imported into `Community/`,
+named after the `name` field in its `SKILL.md` frontmatter. Re-adding a skill
+overwrites the existing copy while keeping its registry links intact.
 
 ## Link Destinations
 

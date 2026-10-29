@@ -37,9 +37,23 @@ program
   .option('-t, --tag [value]', 'Filter by tag, or show tag browser if no value given')
   .action(listCommand);
 
+function collectSkill(value: string, previous: string[] = []): string[] {
+  return [...previous, value];
+}
+
 program
-  .command('add <name>')
-  .description('Install a skill from the community registry')
+  .command('add <source>')
+  .description('Install skills from a Git URL or the community registry')
+  .option(
+    '-s, --skill <name>',
+    'Install only this skill (repeatable, or comma-separated)',
+    collectSkill,
+  )
+  .addHelpText('after', `
+Examples:
+  $ skill add lovstudio/md2pdf
+  $ skill add https://github.com/twostraws/swiftui-agent-skill --skill swiftui-pro
+  $ skill add git@github.com:owner/repo.git --skill foo,bar`)
   .action(addCommand);
 
 program
